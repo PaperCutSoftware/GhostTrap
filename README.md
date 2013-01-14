@@ -9,11 +9,11 @@ the project is to bring best-of-breed security to Ghostscript's command-line app
 
 At a deep technical level *Ghost Trap* was designed with the help of 
 [Peter Venkman, Egon Spengler, and Raymond Stantz](http://en.wikipedia.org/wiki/Ghostbusters). 
-It's a portable Ecto Containment Unit which securely holds Ghostscripts in a 
-laser containment field.
+It can be simply explained as portable [Ecto Containment Unit](http://www.gbfans.com/equipment/ghost-trap/) which
+securely holds Ghostscripts in a laser containment field.
 
 <a href="http://www.gbfans.com/equipment/ghost-trap/" 
-    title="Ghostbusters Fan - used as a parody - love the '80's!">
+    title="Ghostbusters Fan -  love the '80's! (used as a parody) -">
     <img src="https://github.com/codedance/GhostTrap/raw/master/images/ghostbusters-ghost-trap-sized.jpg">
 </a>
 
