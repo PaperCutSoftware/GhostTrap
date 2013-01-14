@@ -94,6 +94,7 @@ The following future refinements are planned:
 
  * Sandbox other executable in the GhostPDL project (e.g ```pcl6.exe```).
  * Support custom FONT and LIB paths defined on the command line (read only access).
+ * Look at sandbox options on Linux.
  * 64bit version when/if the Chromium sandbox supports it.
 
 
