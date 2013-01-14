@@ -5,6 +5,8 @@ target/
 third-party/chromium/*
 third-party/ghostpdl/*
 
+*.swp
+
 #################
 ## Visual Studio
 #################
