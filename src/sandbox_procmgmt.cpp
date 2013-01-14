@@ -81,7 +81,6 @@ static DWORD ConsumeOutput(HANDLE h_in, FILE *f_out) {
         }
     }
     
-    fclose(f_out);
     ::CloseHandle(h_in);
     
     return 0;
