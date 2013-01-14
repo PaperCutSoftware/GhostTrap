@@ -20,7 +20,7 @@ laser containment field.
 
 ##Download
 
-*Windows:* [ghost-trap-installer.exe](https://github.com/codedance/...)  (version 1.0)
+*Windows:* [ghost-trap-installer.exe](http://www.papercut.com/anonftp/pub/open-source/ghost-trap/ghost-trap-installer-1.0.9.06.exe)  (version 1.0)
 
 ##Motivation
 PDL interpreters are large complex native code solutions. Adobe Reader is also a PDL viewer and as evident
