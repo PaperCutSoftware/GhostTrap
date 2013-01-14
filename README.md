@@ -34,7 +34,7 @@ archive print jobs, into our print management software. To support viewing of Po
 needed to reply on a PostScript interpreter.
 
 Rather than risk PaperCut users being susceptible to zero-day attacks we decided to take a more 
-proactive approach and have used sandboxing.  This was made possible because both Ghostscript and 
+proactive approach and use process sandboxing.  This was made possible because both Ghostscript and 
 Chromium are open source software projects. *Ghost Trap* brings Chromium's best of breed sandboxing 
 security to Ghostscript.  Rendering print jobs into images is done within the sandbox.
 
