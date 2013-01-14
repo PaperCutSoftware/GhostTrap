@@ -34,9 +34,10 @@ archive print jobs, into our print management software. To support viewing of Po
 needed to reply on a PostScript interpreter.
 
 Rather than risk PaperCut users being susceptible to zero-day attacks we decided to take a more 
-proactive approach and use process sandboxing.  This was made possible because both Ghostscript and 
+proactive approach and adopt modern process-level sandboxing.  This was made possible as both Ghostscript and 
 Chromium are open source software projects. *Ghost Trap* brings Chromium's best of breed sandboxing 
-security to Ghostscript.  Rendering print jobs into images is done within the sandbox.
+security to Ghostscript.  Although sandboxing is not [100% infalabue](http://blog.chromium.org/2012/05/tale-of-two-pwnies-part-1.html)
+the increased security adds a substantial barrier.
 
 
 ##Usage
@@ -70,26 +71,30 @@ with the following known exceptions:
  * The input and output files must be local files.
  * Defining custom/extra FONT or LIB paths are not supported.
 
+
 ##How it works
 
-```gswin32c-trapped.exe``` sets up a whitelist of resources required to perform the conversion.  It then 
-execs a child process within a sandbox to perform the conversion. The whitelist of resources is dynamically 
+```gswin32c-trapped.exe``` first determins a whitelist of resources required to perform the conversion.  It then 
+execs a child process within a sandbox to perform the task. The whitelist of resources is dynamically 
 constructed by determining the input file and output file/directory from the supplied command-line arguments. 
-Ghostscript is provided access only to:
+The Ghostscript execution code is only provided access to:
 
  * Read only access to the Windows Fonts directory.
  * Read only access to application-level registry keys (HKLM\Software\GPL Ghostscript).
  * Read only access to Ghostscript's lib folder resources.
  * Read only access to the input file.
- * Write access to the output directory.
-
+ * Write access to the user-level Temp directory.
+ * Write access to the output directory (OutputFile).
+ 
 
 ##Future
 
 The following future refinements are planned:
 
  * Sandbox other executable in the GhostPDL project (e.g ```pcl6.exe```).
- * Support custom FONT and LIB paths?
+ * Support custom FONT and LIB paths defined on the command line (read only access).
+ * 64bit version when/if the Chromium sandbox support.
+
 
 ##Authors
 
@@ -97,20 +102,25 @@ The following future refinements are planned:
 
 <img src="http://www.papercut.com/images/logo_papercut.png">
 
+
 ##Developers
 
 If you with to build Ghost Trap form source, here is a brief flow:
 
- 1. Clone the GIT repo
- 1. Download Google Chromium source into the third-party directory as documented in
-    ```[ghost-trap]/third-party/README.txt```
- 1. Download GhostPDL source into the third-party directory as documented in
-    ```[ghost-trap]/third-party/README.txt```
- 1. Perform a ```32bit Release``` compile on each dependency (follow the project's documentation). 
-    Note, building Chromium is very involved! You will not need to compile whole Chromium source.
-    Just the "sandbox" sub project will be enough to generate the required dependencies.
- 1. Install [INNO setup](http://www.jrsoftware.org/isinfo.php)
- 1. Run ```build.bat```
+ 1. Clone the GIT repo.
+
+ 2. Download Google Chromium source into the third-party directory as documented in ```[ghost-trap]/third-party/README.txt```
+
+ 3. Download GhostPDL source into the third-party directory as documented in ```[ghost-trap]/third-party/README.txt```
+
+ 4. Perform a ```32bit Release``` compile on each dependency (follow the project's documentation). 
+    Note: Building Chromium is very involved! Follow the directions carefully. You will not need to compile whole 
+    Chromium source. Just the "sandbox" sub project will be enough to generate the required dependencies.
+
+ 5. Install [INNO setup](http://www.jrsoftware.org/isinfo.php).
+
+ 6. Run ```build.bat```
+
 
 ##License
 
