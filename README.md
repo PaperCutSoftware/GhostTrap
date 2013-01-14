@@ -1,16 +1,15 @@
 Ghost Trap - Ghostscript trapped in a sandbox
 ======
 
-*Ghost Trap* is a modified distribution of the 
-[GPL Ghostscript PDL interpreter](http://www.ghostscript.com/) secured and 
-sandboxed using 
-[Google Chrome sandbox technology](http://dev.chromium.org/developers/design-documents/sandbox).  The objective of 
-the project is to bring best-of-breed security to Ghostscript's command-line applications.
+*Ghost Trap* is primarily used to convert PostScript and PDF files from untrusted sources into images.
+It's is a modified distribution of the [GPL Ghostscript PDL interpreter](http://www.ghostscript.com/) secured and 
+sandboxed using [Google Chrome sandbox technology](http://dev.chromium.org/developers/design-documents/sandbox).  The 
+objective of the project is to bring best-of-breed security to Ghostscript's command-line applications.  
 
-At a deep technical level *Ghost Trap* was designed with the help of 
+For the less technical audience  *Ghost Trap* was designed with the help of 
 [Peter Venkman, Egon Spengler, and Raymond Stantz](http://en.wikipedia.org/wiki/Ghostbusters). 
 It can be simply explained as portable [Ecto Containment Unit](http://www.gbfans.com/equipment/ghost-trap/) which
-securely holds Ghostscripts in a laser containment field.
+securely holds Ghostscripts in a laser containment field :-)
 
 <a href="http://www.gbfans.com/equipment/ghost-trap/" 
     title="Ghostbusters Fan -  love the '80's! (used as a parody) -">
