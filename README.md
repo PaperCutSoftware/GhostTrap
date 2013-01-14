@@ -36,8 +36,9 @@ needed to reply on a PostScript interpreter.
 Rather than risk PaperCut users being susceptible to zero-day attacks we decided to take a more 
 proactive approach and adopt modern process-level sandboxing.  This was made possible as both Ghostscript and 
 Chromium are open source software projects. *Ghost Trap* brings Chromium's best of breed sandboxing 
-security to Ghostscript.  Although sandboxing is not [100% infalabue](http://blog.chromium.org/2012/05/tale-of-two-pwnies-part-1.html)
-the increased security adds a substantial barrier.
+security to Ghostscript.  Although sandboxing is not [100% infallible](http://blog.chromium.org/2012/05/tale-of-two-pwnies-part-1.html)
+the increased security adds a substantial barrier, and provides our users with a best-practice security option for 
+PostScript to image conversion.
 
 
 ##Usage
