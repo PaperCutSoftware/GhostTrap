@@ -23,7 +23,7 @@ securely holds Ghostscripts in a laser containment field.
 *Windows:* [ghost-trap-installer.exe](http://www.papercut.com/anonftp/pub/open-source/ghost-trap/ghost-trap-installer-1.0.9.06.exe)  (version 1.0)
 
 ##Motivation
-PDL interpreters are large complex native code solutions. Adobe Reader is also a PDL viewer and as evident
+Page Description Language (PDL) interpreters are large complex native code solutions. Adobe Reader is also a PDL viewer and as evident
 by the number of security updates seen over the years, maintaining a secure solution in this space is a
 difficult and ongoing exercise.  
 
@@ -34,11 +34,12 @@ archive print jobs, into our print management software. To support viewing of Po
 needed to reply on a PostScript interpreter.
 
 Rather than risk PaperCut users being susceptible to zero-day attacks we decided to take a more 
-proactive approach and adopt modern process-level sandboxing.  This was made possible as both Ghostscript and 
-Chromium are open source software projects. *Ghost Trap* brings Chromium's best of breed sandboxing 
-security to Ghostscript.  Although sandboxing is not [100% infallible](http://blog.chromium.org/2012/05/tale-of-two-pwnies-part-1.html)
-the increased security adds a substantial barrier, and provides our users with a best-practice security option for 
-PostScript to image conversion.
+proactive approach by adopting modern process-level sandboxing.  This "extra barrier"
+has been made possible by mating two fantastic open source projects, Ghostscript and Chromium. 
+*Ghost Trap* brings Chromium's best of breed sandboxing security to Ghostscript.  Although sandboxing 
+is not [100% infallible](http://blog.chromium.org/2012/05/tale-of-two-pwnies-part-1.html) the increased security 
+adds a substantial barrier, and provides our users with a best-practice security option for PostScript to image 
+conversion.
 
 
 ##Usage
@@ -69,8 +70,8 @@ To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
 was as standard Ghostscript console command as [documented](http://ghostscript.com/doc/9.06/Use.htm),
 with the following known exceptions:
 
- * The input and output files must be local files.
- * Defining custom/extra FONT or LIB paths are not supported.
+ * The input and output files must be on a local disk (no network shares).
+ * Defining custom/extra FONT or LIB paths on the command line is not allowed.
 
 
 ##How it works
@@ -78,7 +79,7 @@ with the following known exceptions:
 ```gswin32c-trapped.exe``` first determins a whitelist of resources required to perform the conversion.  It then 
 execs a child process within a sandbox to perform the task. The whitelist of resources is dynamically 
 constructed by determining the input file and output file/directory from the supplied command-line arguments. 
-The Ghostscript execution code is only provided access to:
+The Ghostscript interpreter code may only access:
 
  * Read only access to the Windows Fonts directory.
  * Read only access to application-level registry keys (HKLM\Software\GPL Ghostscript).
@@ -106,7 +107,7 @@ The following future refinements are planned:
 
 ##Developers
 
-If you with to build Ghost Trap form source, here is a brief flow:
+To build Ghost Trap form source, here is a brief flow:
 
  1. Clone the GIT repo.
 
