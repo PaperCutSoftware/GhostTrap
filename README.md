@@ -2,7 +2,7 @@ Ghost Trap - Ghostscript trapped in a sandbox
 ======
 
 *Ghost Trap* is primarily used to convert PostScript and PDF files from untrusted sources into images.
-It's is a modified distribution of the [GPL Ghostscript PDL interpreter](http://www.ghostscript.com/) secured and 
+It's a modified distribution of the [GPL Ghostscript PDL interpreter](http://www.ghostscript.com/) secured and 
 sandboxed using [Google Chrome sandbox technology](http://dev.chromium.org/developers/design-documents/sandbox).  The 
 objective of the project is to bring best-of-breed security to Ghostscript's command-line applications.  
 
