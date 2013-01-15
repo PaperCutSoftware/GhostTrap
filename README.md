@@ -37,7 +37,7 @@ proactive approach by adopting modern process-level sandboxing.  This "extra bar
 has been made possible by mating two fantastic open source projects, Ghostscript and Chromium. 
 *Ghost Trap* brings Chromium's best of breed sandboxing security to Ghostscript.  Although sandboxing 
 is not [100% infallible](http://blog.chromium.org/2012/05/tale-of-two-pwnies-part-1.html) the increased security 
-adds a substantial barrier, and provides our users with a best-practice security option for PostScript to image 
+adds a very substantial barrier, and provides our users with a best-practice secure option for PostScript to image 
 conversion.
 
 
