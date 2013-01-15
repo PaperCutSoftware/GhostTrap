@@ -9,9 +9,10 @@
 ;
 
 #define app_name "Ghost Trap"
+#define app_name_no_space "GhostTrap"
 
 #ifndef app_version
-  #define app_version "1.0"
+  #define app_version "0.1"
 #endif
 
 #define gs_name "GPL Ghostscript"
@@ -31,7 +32,7 @@ AppPublisher=Chris Dance, PaperCut Software Int. Pty. Ltd.
 AppPublisherURL=https://github.com/codedance/GhostTrap
 AppSupportURL=https://github.com/codedance/GhostTrap/issues
 AppUpdatesURL=https://github.com/codedance/GhostTrap
-DefaultDirName={pf}\GhostTrap
+DefaultDirName={pf}\{#app_name_no_space}
 
 VersionInfoVersion={#app_version}.{#gs_version}
 
@@ -64,9 +65,9 @@ Source: *; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Registry]
 ; Add some keys that might help us in the future
-Root: HKLM; Subkey: "Software\{#app_name}"; Flags: uninsdeletekey
-Root: HKLM; Subkey: "Software\{#app_name}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Flags: uninsdeletevalue
-Root: HKLM; Subkey: "Software\{#app_name}"; ValueType: string; ValueName: "Version"; ValueData: "{#= app_version}"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "Software\{#app_name_no_space}"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "Software\{#app_name_no_space}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "Software\{#app_name_no_space}"; ValueType: string; ValueName: "Version"; ValueData: "{#= app_version}"; Flags: uninsdeletevalue
 
 ; Mirror Ghostscript default keys
 Root: HKLM; Subkey: "Software\{#gs_name}"; Flags: uninsdeletekey

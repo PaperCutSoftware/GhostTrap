@@ -111,25 +111,27 @@ static DWORD WINAPI ConsumeStdErr(void *param) {
 static DWORD WINAPI ProvideStdIn(void *param) {
     HANDLE stdin_pipe = (HANDLE) param;
 
-    CHAR read_buff[256];
+    CHAR read_buff[512];
     DWORD nBytesRead,nBytesWrote;
-
     // Get input from our console and send it to child through the pipe.
+    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
     while (true) {
 
-        if (!ReadFile(GetStdHandle(STD_INPUT_HANDLE), read_buff, 1, &nBytesRead, NULL)) {
+        if (!ReadFile(h_stdin, read_buff, sizeof(read_buff), &nBytesRead, NULL)) {
             break;
         }
 
-        read_buff[nBytesRead] = '\0';
-        if (!WriteFile(stdin_pipe, read_buff, nBytesRead, &nBytesWrote, NULL)) {
-            if (GetLastError() == ERROR_NO_DATA) {
-                break; // Pipe was closed (normal exit path).
-            } else {
-                break;
+        if (nBytesRead > 0) {
+            if (!WriteFile(stdin_pipe,  read_buff, nBytesRead, &nBytesWrote, NULL)) {
+                DWORD last_error = GetLastError();
+                if (ERROR_NO_DATA == last_error) {
+                    break; // Pipe was closed (normal exit path).
+                } else {
+                    break;
+                }
             }
+            FlushFileBuffers(stdin_pipe);
         }
-        FlushFileBuffers(stdin_pipe);
     }
 
     ::CloseHandle(stdin_pipe);
@@ -198,7 +200,7 @@ static int RunParent(int argc, wchar_t* argv[],
 
         HANDLE stdout_pipe = ::CreateNamedPipe(pipe_path,
                                                 PIPE_ACCESS_INBOUND | WRITE_DAC,
-                                                PIPE_TYPE_MESSAGE | PIPE_WAIT,
+                                                PIPE_TYPE_BYTE | PIPE_WAIT,
                                                 1,  // Number of instances.
                                                 512,  // Out buffer size.
                                                 512,  // In buffer size.
@@ -226,7 +228,7 @@ static int RunParent(int argc, wchar_t* argv[],
 
         HANDLE stderr_pipe = ::CreateNamedPipe(pipe_path,
                                                 PIPE_ACCESS_INBOUND | WRITE_DAC,
-                                                PIPE_TYPE_MESSAGE | PIPE_WAIT,
+                                                PIPE_TYPE_BYTE | PIPE_WAIT,
                                                 1,  // Number of instances.
                                                 512,  // Out buffer size.
                                                 512,  // In buffer size.
@@ -252,7 +254,7 @@ static int RunParent(int argc, wchar_t* argv[],
     swprintf(pipe_path, MAX_PATH - 1, STDIN_PIPE_NAME, process_id);
     HANDLE stdin_pipe = ::CreateNamedPipe(pipe_path,
                                             PIPE_ACCESS_OUTBOUND | WRITE_DAC,
-                                            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                                            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
                                             1,  // Number of instances.
                                             512,  // Out buffer size.
                                             512,  // In buffer size.
