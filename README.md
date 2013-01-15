@@ -1,10 +1,10 @@
 Ghost Trap - Ghostscript trapped in a sandbox
 ======
 
-*Ghost Trap* is primarily used to convert PostScript and PDF files from untrusted sources into images.
+*Ghost Trap* is primarily used to securely convert PostScript and PDF files from untrusted sources into images.
 It's a modified distribution of the [GPL Ghostscript PDL interpreter](http://www.ghostscript.com/) secured and 
 sandboxed using [Google Chrome sandbox technology](http://dev.chromium.org/developers/design-documents/sandbox).  The 
-objective of the project is to bring best-of-breed security to Ghostscript's command-line applications.  
+objective of the project is to bring best-of-breed security to Ghostscript's command-line conversion applications.  
 
 For the less technical audience  *Ghost Trap* was designed with the help of 
 [Peter Venkman, Egon Spengler, and Raymond Stantz](http://en.wikipedia.org/wiki/Ghostbusters). 
@@ -46,14 +46,14 @@ conversion.
 Install *Ghost Trap* (download link above).  Here are some examples using the example PostScript files
 supplied with Ghostscript.
 
-To convert the Escher PostScript example into a PNG image *WITHOUT* sandboxing:
+To convert the Escher PostScript example into a PNG image *WITHOUT* sandboxing (this is just standard Ghostscript):
 
     C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c.exe" -q -dSAFER -dNOPAUSE -dBATCH ^
                  -sDEVICE=png16m -sOutputFile=escher.png ^
                  "C:\Program Files (x86)\GhostTrap\examples\escher.ps"
 
 
-To convert th same Escher PostScript example into a PNG image *WITH* sandboxing:
+To convert the same Escher example into a PNG image *WITH* sandboxing using *Ghost Trap*:
 
     C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c-trapped.exe" -q -dSAFER -dNOPAUSE -dBATCH ^
                  -sDEVICE=png16m -sOutputFile=escher.png ^
@@ -66,7 +66,7 @@ To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
                  "C:\Program Files (x86)\GhostTrap\examples\annots.pdf"
 
 ```gswin32c-trapped.exe``` is the sandboxed version of ``gswin32c.exe``.  It should behave the same
-was as standard Ghostscript console command as [documented](http://ghostscript.com/doc/9.06/Use.htm),
+as the standard Ghostscript console command as [documented](http://ghostscript.com/doc/9.06/Use.htm),
 with the following known exceptions:
 
  * The input and output files must be on a local disk (no network shares).
@@ -75,7 +75,7 @@ with the following known exceptions:
 
 ##How it works
 
-```gswin32c-trapped.exe``` first determins a whitelist of resources required to perform the conversion.  It then 
+```gswin32c-trapped.exe``` first determines a whitelist of resources required to perform the conversion.  It then 
 execs a child process within a sandbox to perform the task. The whitelist of resources is dynamically 
 constructed by determining the input file and output file/directory from the supplied command-line arguments. 
 The Ghostscript interpreter code may only access:
@@ -107,7 +107,7 @@ The following future refinements are planned:
 
 ##Developers
 
-To build Ghost Trap form source, here is a brief flow:
+To build Ghost Trap from source, here is a brief flow:
 
  1. Clone the GIT repo.
 
