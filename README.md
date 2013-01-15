@@ -4,7 +4,8 @@ Ghost Trap - Ghostscript trapped in a sandbox
 *Ghost Trap* is primarily used to securely convert PostScript and PDF files from untrusted sources into images.
 It's a modified distribution of the [GPL Ghostscript PDL interpreter](http://www.ghostscript.com/) secured and 
 sandboxed using [Google Chrome sandbox technology](http://dev.chromium.org/developers/design-documents/sandbox).  The 
-objective of the project is to bring best-of-breed security to Ghostscript's command-line conversion applications.  
+objective of the project is to bring best-of-breed security to Ghostscript's command-line conversion applications
+on MS Windows.
 
 For the less technical audience  *Ghost Trap* was designed with the help of 
 [Peter Venkman, Egon Spengler, and Raymond Stantz](http://en.wikipedia.org/wiki/Ghostbusters). 
@@ -100,16 +101,16 @@ The following future refinements are planned:
 
 ##Authors
 
-*Ghost Trap* is open source software supported by [PaperCut Software](http://www.papercut.com/).
+![PaperCut Software Logo](http://www.papercut.com/images/logo_papercut.png)
 
-<img src="http://www.papercut.com/images/logo_papercut.png">
+*Ghost Trap* is open source software supported by [PaperCut Software](http://www.papercut.com/)
 
 
 ##Developers
 
 To build Ghost Trap from source, here is a brief flow:
 
- 1. Clone the GIT repo.
+ 1. Clone this git repo.
 
  2. Download Google Chromium source into the third-party directory as documented in ```[ghost-trap]/third-party/README.txt```
 
