@@ -42,7 +42,7 @@ adds a very substantial barrier, and provides our users with a best-practice sec
 conversion.
 
 
-##Usage
+##Command-Line Usage
 
 Install *Ghost Trap* (download link above).  Here are some examples using the example PostScript files
 supplied with Ghostscript.
@@ -103,7 +103,8 @@ The following future refinements are planned:
 
 ![PaperCut Software Logo](http://www.papercut.com/images/logo_papercut.png)
 
-*Ghost Trap* is open source software supported by [PaperCut Software](http://www.papercut.com/)
+*Ghost Trap* is open source software developed by Chris Dance with the support of 
+[PaperCut Software](http://www.papercut.com/).
 
 
 ##Developers
