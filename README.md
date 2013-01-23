@@ -130,7 +130,7 @@ To build Ghost Trap from source, here is a brief flow:
 
 *Ghost Trap* is open source software licensed under the GPL:
 
-    Copyright (c) 2011-2012 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
+    Copyright (c) 2012-2013 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
