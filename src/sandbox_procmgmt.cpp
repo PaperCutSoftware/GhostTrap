@@ -322,7 +322,7 @@ static int RunParent(int argc, wchar_t* argv[],
 
     broker_service->WaitForAllTargets();
 
-    // Wait for out consuming std(out|err) threads to finish.
+    // Wait for BOTH our consuming std(out|err) threads to finish.
     WaitForSingleObject(stdout_thread, 1000);
     WaitForSingleObject(stderr_thread, 1000);
     return exit_code;

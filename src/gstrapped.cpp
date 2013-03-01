@@ -84,7 +84,7 @@ static bool LoadGSDLL(GSDLL *gsdll) {
      /* First try to load DLL from the same directory as EXE */
     ::GetModuleFileName(::GetModuleHandle(NULL), fullname, sizeof(fullname));
     if ((p = wcsrchr(fullname, L'\\')) != NULL) {
-        p++;
+        ++p;
     } else {
         p = fullname;
     }
@@ -265,7 +265,7 @@ static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[]) {
 
     wchar_t new_arg[MAX_PATH + 20];
 
-    for (int i = 0; i < argc; i++) {
+    for (int i = 0; i < argc; ++i) {
         wchar_t *current_argv = argv[i];
 
         full_path_argv[i] = current_argv;
@@ -427,7 +427,7 @@ static void ApplyPolicy(sandbox::TargetPolicy* policy, int argc, wchar_t* argv[]
     // Allow WRITE access to OutputFile target directory
     BOOL has_outfile = FALSE;
     int i;
-    for (i = 0; i < argc; i++) {
+    for (i = 0; i < argc; ++i) {
         wchar_t *p;
         if ((p = wcsstr(nargv[i], L"OutputFile=")) != NULL) {
             p += 11;
@@ -512,7 +512,7 @@ static int wchar_to_utf8(char *out, const wchar_t *in)
 static int SandboxedMain(int argc, wchar_t* argv[]) {
 
     // If -h, print out Ghost Trap information as well.
-    for (int i = 0; i < argc; i++) {
+    for (int i = 0; i < argc; ++i) {
         if (wcscmp(argv[i], L"-h") == 0) {
             printf("Ghost Trap: GPL Ghostscript running in with the Google Chromium Sandbox.\n");
             printf("Ghost Trap: Version %s\n", GHOST_TRAP_VERSION);
@@ -529,18 +529,18 @@ static int SandboxedMain(int argc, wchar_t* argv[]) {
     int nargc = 0;
     int i;
 
-    nargv = (char **) calloc(argc + 1, sizeof(nargv[0]));
+    nargv = (char **) calloc(argc + 1, sizeof(char *));
     if (nargv == NULL) {
         goto error;
     }
 
-    for (i = 0; i < argc; i++) {
+    for (i = 0; i < argc; ++i) {
 
         // GhostTrap is a secured version, so it's only appropriate to ensure 
         // -dSAFER is always on by default. Always append (after arg 0).
         if (i == 1) {
             nargv[nargc] = "-dSAFER";
-            nargc++;
+            ++nargc;
         }
 
         wchar_t *current_argv = full_path_argv[i];
@@ -550,7 +550,7 @@ static int SandboxedMain(int argc, wchar_t* argv[]) {
             goto error;
         }
         wchar_to_utf8(nargv[nargc], current_argv);
-        nargc++;
+        ++nargc;
     }
 
     // Run GS code (via DLL)
@@ -577,7 +577,7 @@ error:
     }
 
     if (nargv) {
-        for (i = 0; i < argc; i++) {
+        for (i = 0; i < argc; ++i) {
             free(nargv[i]);
         }
         free(nargv);
