@@ -20,7 +20,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ##Download
 
-*Windows:* [ghost-trap-installer.exe](http://cdn.papercut.com/anonftp/pub/open-source/ghost-trap/ghost-trap-installer-1.0.9.06.exe)  (version 1.0)
+*Windows:* [ghost-trap-installer.exe](http://cdn.papercut.com/anonftp/pub/open-source/ghost-trap/ghost-trap-installer-1.1.9.07.exe)  (version 1.1)
 
 ##Motivation
 Page Description Language (PDL) interpreters are large complex native code solutions. Adobe Reader is also a PDL viewer and as evident
@@ -56,21 +56,22 @@ To convert the Escher PostScript example into a PNG image *WITHOUT* sandboxing (
 
 To convert the same Escher example into a PNG image *WITH* sandboxing using *Ghost Trap*:
 
-    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c-trapped.exe" -q -dSAFER -dNOPAUSE -dBATCH ^
+    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c-trapped.exe" -q -dNOPAUSE -dBATCH ^
                  -sDEVICE=png16m -sOutputFile=escher.png ^
                  "C:\Program Files (x86)\GhostTrap\examples\escher.ps"
 
 To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
 
-    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c-trapped.exe" -q -dSAFER -dNOPAUSE -dBATCH ^
+    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c-trapped.exe" -q -dNOPAUSE -dBATCH ^
                  -sDEVICE=jpeg "-sOutputFile=annots page %d.jpg" ^
                  "C:\Program Files (x86)\GhostTrap\examples\annots.pdf"
 
 ```gswin32c-trapped.exe``` is the sandboxed version of ``gswin32c.exe``.  It should behave the same
-as the standard Ghostscript console command as [documented](http://ghostscript.com/doc/9.06/Use.htm),
+as the standard Ghostscript console command as [documented](http://ghostscript.com/doc/9.07/Use.htm),
 with the following known exceptions:
 
  * The input and output files must be on a local disk (no network shares).
+ * The ```-dSAFER``` mode is always enabled by default.
  * Defining custom/extra FONT or LIB paths on the command line is not allowed.
 
 
@@ -87,6 +88,18 @@ The Ghostscript interpreter code may only access:
  * Read only access to the input file.
  * Write access to the user-level Temp directory.
  * Write access to the output directory (OutputFile).
+
+
+##Release History
+
+**2013-01-14** 
+ * Initial public release.
+
+**2013-03-01**
+ * Compiled against Ghostscript 9.07.
+ * ```-dSAFER``` is now and enforced default.
+ * Updated license to AFFERO GPL.
+ * Minor code cleanup to remove some FIXME's.
  
 
 ##Future
@@ -133,15 +146,15 @@ To build Ghost Trap from source, here is a brief flow:
     Copyright (c) 2012-2013 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
 
     This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
+    You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+   
