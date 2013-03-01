@@ -67,7 +67,7 @@ Source: *; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Add some keys that might help us in the future
 Root: HKLM; Subkey: "Software\{#app_name_no_space}"; Flags: uninsdeletekey
 Root: HKLM; Subkey: "Software\{#app_name_no_space}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Flags: uninsdeletevalue
-Root: HKLM; Subkey: "Software\{#app_name_no_space}"; ValueType: string; ValueName: "Version"; ValueData: "{#= app_version}"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "Software\{#app_name_no_space}"; ValueType: string; ValueName: "Version"; ValueData: "{#= app_version}.{#gs_version}"; Flags: uninsdeletevalue
 
 ; Mirror Ghostscript default keys
 Root: HKLM; Subkey: "Software\{#gs_name}"; Flags: uninsdeletekey

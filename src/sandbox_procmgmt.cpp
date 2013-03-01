@@ -216,6 +216,7 @@ static int RunParent(int argc, wchar_t* argv[],
     }
 
     // Setup pipe and consume STDOUT
+    HANDLE stdout_thread;
     {
         wchar_t pipe_path[MAX_PATH];
         swprintf(pipe_path, MAX_PATH - 1, STDOUT_PIPE_NAME, process_id);
@@ -235,7 +236,7 @@ static int RunParent(int argc, wchar_t* argv[],
         }
 
         DWORD thread_id;
-        ::CreateThread(NULL,  // Default security attributes
+        stdout_thread = ::CreateThread(NULL,  // Default security attributes
                         NULL,  // Default stack size
                         &ConsumeStdOut,
                         stdout_pipe,
@@ -244,6 +245,7 @@ static int RunParent(int argc, wchar_t* argv[],
     }
 
     // Setup pipe and consume STDERR
+    HANDLE stderr_thread;
     {
         wchar_t pipe_path[MAX_PATH];
         swprintf(pipe_path, MAX_PATH - 1, STDERR_PIPE_NAME, process_id);
@@ -263,7 +265,7 @@ static int RunParent(int argc, wchar_t* argv[],
         }
 
         DWORD thread_id;
-        ::CreateThread(NULL,  // Default security attributes
+        stderr_thread = ::CreateThread(NULL,  // Default security attributes
                         NULL,  // Default stack size
                         &ConsumeStdErr,
                         stderr_pipe,
@@ -320,9 +322,9 @@ static int RunParent(int argc, wchar_t* argv[],
 
     broker_service->WaitForAllTargets();
 
-    // HACK: Give chance for child output to be fully consumed before exiting.
-    // FIXME: What for stdout/stdin threads to terminate.
-    ::Sleep(500);
+    // Wait for out consuming std(out|err) threads to finish.
+    WaitForSingleObject(stdout_thread, 1000);
+    WaitForSingleObject(stderr_thread, 1000);
     return exit_code;
 }
 

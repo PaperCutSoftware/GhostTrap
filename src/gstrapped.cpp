@@ -526,21 +526,31 @@ static int SandboxedMain(int argc, wchar_t* argv[]) {
   
     /* Duplicate wide args as utf8 */
     char **nargv;
+    int nargc = 0;
     int i;
 
-    nargv = (char **) calloc(argc, sizeof(nargv[0]));
+    nargv = (char **) calloc(argc + 1, sizeof(nargv[0]));
     if (nargv == NULL) {
         goto error;
     }
 
     for (i = 0; i < argc; i++) {
+
+        // GhostTrap is a secured version, so it's only appropriate to ensure 
+        // -dSAFER is always on by default. Always append (after arg 0).
+        if (i == 1) {
+            nargv[nargc] = "-dSAFER";
+            nargc++;
+        }
+
         wchar_t *current_argv = full_path_argv[i];
 
-        nargv[i] = (char *) malloc(wchar_to_utf8(NULL, current_argv));
-        if (nargv[i] == NULL) {
+        nargv[nargc] = (char *) malloc(wchar_to_utf8(NULL, current_argv));
+        if (nargv[nargc] == NULL) {
             goto error;
         }
-        wchar_to_utf8(nargv[i], current_argv);
+        wchar_to_utf8(nargv[nargc], current_argv);
+        nargc++;
     }
 
     // Run GS code (via DLL)
@@ -552,7 +562,7 @@ static int SandboxedMain(int argc, wchar_t* argv[]) {
         return 22;
     }
 
-    code = global_gsdll.init_with_args(global_gsinstance, argc, nargv);
+    code = global_gsdll.init_with_args(global_gsinstance, nargc, nargv);
 
     code1 = global_gsdll.exit(global_gsinstance);
 

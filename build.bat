@@ -1,6 +1,6 @@
 @echo off
 
-set GHOST_TRAP_VERSION=1.0
+set GHOST_TRAP_VERSION=1.1
 
 set INNO_COMPILER=%programfiles(x86)%\Inno Setup 5\ISCC.exe
 SETLOCAL ENABLEDELAYEDEXPANSION
@@ -70,6 +70,9 @@ REM # Create target dir mirroring Ghostscript standard install.
 REM #
 
 rmdir /s /q "target" > NUL
+
+REM # Small sleep so we don't hit locked files.
+ping -n 3 127.0.0.1 > NUL
 
 echo Copying files...
 
