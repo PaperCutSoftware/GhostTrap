@@ -539,7 +539,7 @@ static int SandboxedMain(int argc, wchar_t* argv[]) {
         // GhostTrap is a secured version, so it's only appropriate to ensure 
         // -dSAFER is always on by default. Always append (after arg 0).
         if (i == 1) {
-            nargv[nargc] = "-dSAFER";
+            nargv[nargc] = _strdup("-dSAFER");
             ++nargc;
         }
 

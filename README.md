@@ -20,7 +20,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ##Download
 
-*Windows:* [ghost-trap-installer.exe](http://cdn.papercut.com/anonftp/pub/open-source/ghost-trap/ghost-trap-installer-1.1.9.07.exe)  (version 1.1)
+*Windows:* [ghost-trap-installer.exe](http://cdn.papercut.com/anonftp/pub/open-source/ghost-trap/ghost-trap-installer-1.2.9.07.exe)  (version 1.2)
 
 ##Motivation
 Page Description Language (PDL) interpreters are large complex native code solutions. Adobe Reader is also a PDL viewer and as evident
@@ -92,15 +92,20 @@ The Ghostscript interpreter code may only access:
 
 ##Release History
 
-**2013-01-14** 
- * Initial public release.
+**2013-03-04**
+ * Addressed an issue that would result in Ghost Trap returning the wrong exit code.
+ * Rolled to version 1.2
 
 **2013-03-01**
  * Compiled against Ghostscript 9.07.
  * ```-dSAFER``` is now and enforced default.
  * Updated license to AFFERO GPL.
  * Minor code cleanup to remove some FIXME's.
- 
+ * Rolled to version 1.1
+
+**2013-01-14** 
+ * Initial public release.
+
 
 ##Future
 
