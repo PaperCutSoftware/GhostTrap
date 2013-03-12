@@ -146,7 +146,7 @@ To build Ghost Trap from source, here is a brief flow:
 
 ##License
 
-*Ghost Trap* is open source software licensed under the GPL:
+*Ghost Trap* is open source software licensed under the Affero GPL:
 
     Copyright (c) 2012-2013 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
 
