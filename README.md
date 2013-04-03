@@ -90,7 +90,7 @@ command-line arguments. The Ghostscript interpreter's access rights is restricte
  * Write access to the output directory (OutputFile).
 
 The sandbox also constrains the execution process on an isolated desktop session to prevent 
-[shatter attacks](http://en.wikipedia.org/wiki/Shatter_attack") and limits IPC and other potential
+[shatter attacks](http://en.wikipedia.org/wiki/Shatter_attack) and limits IPC and other potential
 escape vectors.
 
 ##Release History
