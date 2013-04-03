@@ -78,9 +78,9 @@ with the following known exceptions:
 ##How it works
 
 ```gswin32c-trapped.exe``` first determines a whitelist of resources required to perform the conversion.  It then 
-execs a child process within a sandbox to perform the task. The whitelist of resources is dynamically 
-constructed by determining the input file and output file/directory from the supplied command-line arguments. 
-The Ghostscript interpreter code may only access:
+execs a child process within a strongly contained sandbox to perform the task. The whitelist of allowed resources 
+is dynamically constructed by determining the input file and output file/directory from the supplied 
+command-line arguments. The Ghostscript interpreter's access rights is restricted and it may only access:
 
  * Read only access to the Windows Fonts directory.
  * Read only access to application-level registry keys (HKLM\Software\GPL Ghostscript).
@@ -89,6 +89,9 @@ The Ghostscript interpreter code may only access:
  * Write access to the user-level Temp directory.
  * Write access to the output directory (OutputFile).
 
+The sandbox also constrains the execution process on an isolated desktop session to prevent 
+[shatter attacks](http://en.wikipedia.org/wiki/Shatter_attack") and limits IPC and other potential
+escape vectors.
 
 ##Release History
 
