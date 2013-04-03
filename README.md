@@ -34,8 +34,8 @@ archive print jobs, into our print management software. To support viewing of Po
 needed to reply on a PostScript interpreter.
 
 Rather than risk PaperCut users being susceptible to zero-day attacks we decided to take a more 
-proactive approach by adopting modern process-level sandboxing.  This "extra barrier"
-has been made possible by mating two fantastic open source projects, Ghostscript and Chromium. 
+proactive approach by adopting modern process-level sandboxing.  This best-practice "extra barrier"
+has been made possible by mating two fantastic open source projects: Ghostscript and Google Chromium. 
 *Ghost Trap* brings Chromium's best of breed sandboxing security to Ghostscript.  Although sandboxing 
 is not [100% infallible](http://blog.chromium.org/2012/05/tale-of-two-pwnies-part-1.html) the increased security 
 adds a very substantial barrier, and provides our users with a best-practice secure option for PostScript to image 
