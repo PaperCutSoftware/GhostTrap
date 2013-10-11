@@ -20,7 +20,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ##Download
 
-*Windows:* [ghost-trap-installer.exe](http://cdn.papercut.com/anonftp/pub/open-source/ghost-trap/ghost-trap-installer-1.2.9.07.exe)  (version 1.2)
+*Windows:* [ghost-trap-installer.exe](http://cdn.papercut.com/anonftp/pub/open-source/ghost-trap/ghost-trap-installer-1.2.9.10.exe)  (version 1.2)
 
 ##Motivation
 Page Description Language (PDL) interpreters are large complex native code solutions. Adobe Reader is also a PDL viewer and as evident
@@ -94,6 +94,10 @@ The sandbox also constrains the execution process on an isolated desktop session
 escape vectors.
 
 ##Release History
+
+**2013-10-11**
+ * Recompiled against latest version of Ghostscript (9.10)
+ * Rolled to version 1.2.9.10
 
 **2013-03-04**
  * Addressed an issue that would result in Ghost Trap returning the wrong exit code.
