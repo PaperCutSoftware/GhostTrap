@@ -15,6 +15,7 @@ securely holds Ghostscripts in a laser containment field :-)
 <a href="http://www.gbfans.com/equipment/ghost-trap/" 
     title="Ghostbusters Fan -  love the '80's! (used as a parody)">
     <img src="https://raw.githubusercontent.com/PaperCutSoftware/GhostTrap/master/images/ghostbusters-ghost-trap-sized.jpg">
+>>>>>>> 01f2f66... Moved repo details from owner "codedance" to "PaperCutSoftware"
 </a>
 
 

@@ -28,7 +28,8 @@
 [Setup]
 AppName={#app_name}
 AppVerName="{#app_name} {#app_version}.{#gs_version}"
-AppPublisher=Chris Dance, PaperCut Software Int. Pty. Ltd.
+AppPublisher="PaperCut Software Int. Pty. Ltd."
+>>>>>>> 01f2f66... Moved repo details from owner "codedance" to "PaperCutSoftware"
 AppPublisherURL=https://github.com/PaperCutSoftware/GhostTrap
 AppSupportURL=https://github.com/PaperCutSoftware/GhostTrap/issues
 AppUpdatesURL=https://github.com/PaperCutSoftware/GhostTrap
