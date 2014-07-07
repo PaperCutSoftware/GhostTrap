@@ -28,10 +28,10 @@
 [Setup]
 AppName={#app_name}
 AppVerName="{#app_name} {#app_version}.{#gs_version}"
-AppPublisher="PaperCut Software Int. Pty. Ltd."
-AppPublisherURL=https://github.com/papercut/GhostTrap
-AppSupportURL=https://github.com/papercut/GhostTrap/issues
-AppUpdatesURL=https://github.com/papercut/GhostTrap
+AppPublisher=Chris Dance, PaperCut Software Int. Pty. Ltd.
+AppPublisherURL=https://github.com/codedance/GhostTrap
+AppSupportURL=https://github.com/codedance/GhostTrap/issues
+AppUpdatesURL=https://github.com/codedance/GhostTrap
 DefaultDirName={pf}\{#app_name_no_space}
 
 VersionInfoVersion={#app_version}.{#gs_version}
