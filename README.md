@@ -14,7 +14,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 <a href="http://www.gbfans.com/equipment/ghost-trap/" 
     title="Ghostbusters Fan -  love the '80's! (used as a parody)">
-    <img src="https://github.com/codedance/GhostTrap/raw/master/images/ghostbusters-ghost-trap-sized.jpg">
+    <img src="https://raw.githubusercontent.com/PaperCutSoftware/GhostTrap/master/images/ghostbusters-ghost-trap-sized.jpg">
 </a>
 
 
@@ -155,7 +155,7 @@ To build Ghost Trap from source, here is a brief flow:
 
 *Ghost Trap* is open source software licensed under the Affero GPL:
 
-    Copyright (c) 2012-2013 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
+    Copyright (c) 2012-2014 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as

@@ -1,4 +1,4 @@
-; Copyright (c) 2012-2013 PaperCut Software International Pty. Ltd.
+; Copyright (c) 2012-2014 PaperCut Software International Pty. Ltd.
 ; Author: Chris Dance <chris.dance@papercut.com>
 ; 
 ; License: GNU GPL v3 - See project LICENSE file.
@@ -29,9 +29,9 @@
 AppName={#app_name}
 AppVerName="{#app_name} {#app_version}.{#gs_version}"
 AppPublisher=Chris Dance, PaperCut Software Int. Pty. Ltd.
-AppPublisherURL=https://github.com/codedance/GhostTrap
-AppSupportURL=https://github.com/codedance/GhostTrap/issues
-AppUpdatesURL=https://github.com/codedance/GhostTrap
+AppPublisherURL=https://github.com/PaperCutSoftware/GhostTrap
+AppSupportURL=https://github.com/PaperCutSoftware/GhostTrap/issues
+AppUpdatesURL=https://github.com/PaperCutSoftware/GhostTrap
 DefaultDirName={pf}\{#app_name_no_space}
 
 VersionInfoVersion={#app_version}.{#gs_version}
