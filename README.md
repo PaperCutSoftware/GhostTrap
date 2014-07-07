@@ -14,7 +14,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 <a href="http://www.gbfans.com/equipment/ghost-trap/" 
     title="Ghostbusters Fan -  love the '80's! (used as a parody)">
-    <img src="https://github.com/codedance/GhostTrap/raw/master/images/ghostbusters-ghost-trap-sized.jpg">
+    <img src="https://github.com/papercut/GhostTrap/raw/master/images/ghostbusters-ghost-trap-sized.jpg">
 </a>
 
 
