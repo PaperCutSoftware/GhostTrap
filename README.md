@@ -18,11 +18,12 @@ securely holds Ghostscripts in a laser containment field :-)
 </a>
 
 
-##Download
+## Download
 
 *Windows:* [ghost-trap-installer.exe](http://cdn.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.2.9.10.exe)  (version 1.2)
 
-##Motivation
+## Motivation
+
 Page Description Language (PDL) interpreters are large complex native code solutions. Adobe Reader is also a PDL viewer and as evident
 by the number of security updates seen over the years, maintaining a secure solution in this space is a
 difficult and ongoing exercise.  
@@ -42,7 +43,7 @@ adds a very substantial barrier, and provides our users with a best-practice sec
 conversion.
 
 
-##Command-Line Usage
+## Command-Line Usage
 
 Install *Ghost Trap* (download link above).  Here are some examples using the example PostScript files
 supplied with Ghostscript.
@@ -75,7 +76,7 @@ with the following known exceptions:
  * Defining custom/extra FONT or LIB paths on the command line is not allowed.
 
 
-##How it works
+## How it works
 
 ```gswin32c-trapped.exe``` first determines a whitelist of resources required to perform the conversion.  It then 
 execs a child process within a strongly contained sandbox to perform the task. The whitelist of allowed resources 
@@ -93,7 +94,7 @@ The sandbox also constrains the execution process on an isolated desktop session
 [shatter attacks](http://en.wikipedia.org/wiki/Shatter_attack) and limits IPC and other potential
 escape vectors.
 
-##Release History
+## Release History
 
 **2013-10-11**
  * Recompiled against latest version of Ghostscript (9.10)
@@ -114,7 +115,7 @@ escape vectors.
  * Initial public release.
 
 
-##Future
+## Future
 
 The following future refinements are planned:
 
@@ -124,7 +125,7 @@ The following future refinements are planned:
  * 64bit version when/if the Chromium sandbox supports it.
 
 
-##Authors
+## Authors
 
 ![PaperCut Software Logo](http://www.papercut.com/images/logo_papercut.png)
 
@@ -132,7 +133,7 @@ The following future refinements are planned:
 [PaperCut Software](http://www.papercut.com/).
 
 
-##Developers
+## Developers
 
 To build Ghost Trap from source, here is a brief flow:
 
@@ -151,7 +152,7 @@ To build Ghost Trap from source, here is a brief flow:
  6. Run ```build.bat```
 
 
-##License
+## License
 
 *Ghost Trap* is open source software licensed under the Affero GPL:
 
