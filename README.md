@@ -93,6 +93,12 @@ escape vectors.
 
 ## Release History
 
+**2019-06-03**
+ * Now using the latest 64-bit Chromium sandbox
+ * Recompiled against the latest version of Ghostscript (9.27)
+ * Compiled using Clang by leveraging Chromium's BUILD.gn system
+* Rolled to version 1.3.9.27
+
 **2013-10-11**
  * Recompiled against latest version of Ghostscript (9.10)
  * Rolled to version 1.2.9.10
@@ -119,41 +125,101 @@ The following future refinements are planned:
  * Sandbox other executable in the GhostPDL project (e.g ```pcl6.exe```).
  * Support custom FONT and LIB paths defined on the command line (read only access).
  * Look at sandbox options on Linux.
- * 64bit version when/if the Chromium sandbox supports it.
 
 
 ## Authors
 
-![PaperCut Software Logo](http://www.papercut.com/images/logo_papercut.png)
+## Building GhostTrap
 
-*Ghost Trap* is open source software developed by Chris Dance with the support of 
-[PaperCut Software](http://www.papercut.com/).
+### Requirements
 
+* [GhostTrap Source Code](https://github.com/PaperCutSoftware/GhostTrap)
+* [Chromium (source checkout and build instructions)](https://chromium.googlesource.com/chromium/src/+/master/docs/windows_build_instructions.md)
+* [GhostPDL Source Code](https://www.ghostscript.com/download/gpdldnld.html)
+* [Inno Setup](http://www.jrsoftware.org/isinfo.php)
 
-## Developers
+### Building
 
-To build Ghost Trap from source, here is a brief flow:
+##### Download the GhostTrap source code. You should have the following directory layout:
 
- 1. Clone this git repo.
+```bash
+GhostTrap
+├── build.bat
+├── images
+│   ├── ghostbusters-ghost-trap.jpg
+│   └── ghostbusters-ghost-trap-sized.jpg
+├── installer
+│   └── win
+│       ├── ghost-trap.iss
+│       ├── installer-logo-large.bmp
+│       └── install-info.rtf
+├── LICENSE.rtf
+├── LICENSE.txt
+├── README.md
+├── src
+│   ├── gstrapped.cpp
+│   ├── sandbox_procmgmt.cpp
+│   └── sandbox_procmgmt.h
+├── tests
+└── third-party
+    └── README.txt
+```
 
- 2. Download Google Chromium source into the third-party directory as documented in ```[ghost-trap]/third-party/README.txt```
+##### Fetch the Chromium source code and setup the build environtment. 
+_Follow the instructions carefully!_
 
- 3. Download GhostPDL source into the third-party directory as documented in ```[ghost-trap]/third-party/README.txt```
+Note: Build your chromium directory inside the GhostTrap\third-party folder.
 
- 4. Perform a ```32bit Release``` compile on each dependency (follow the project's documentation). 
-    Note: Building Chromium is very involved! Follow the directions carefully. You will not need to compile whole 
-    Chromium source. Just the "sandbox" sub project will be enough to generate the required dependencies.
+```bash
+GhostTrap
+├── build.bat
+├── *
+├── src
+├── tests
+└── third-party
+    └── chromium ⬅ ⬅ ⬅
+```
 
- 5. Install [INNO setup](http://www.jrsoftware.org/isinfo.php).
+Before the next step, make sure you're able to run the following command:
+```bash
+GhostTrap\third-party\chromium\src> gn gen out\Default
+```
 
- 6. Run ```build.bat```
+##### Download the GhostPDL source code and copy the whole folder inside third-party as ghostpdl.
+
+Compile 64-bit exe's of Ghostscript, GhostPCL and GhostXPS 
+
+```bash
+GhostTrap
+├── build.bat
+├── *
+├── src
+├── tests
+└── third-party
+    ├── chromium
+    └── ghostpdl ⬅ ⬅ ⬅
+```
+
+##### Install Inno Setup
+
+##### Run the build script
+```bash
+GhostTrap> build.bat
+```
+
+##### The installer will be built in GhostTrap\target\ghost-trap-installer-1.2.9.27
+
+### _Successfully built with the following versions:_
+##### _Ghostscript source code: 9.27_
+##### _Chromium source code commit: 2d57e5b8afc6d01b344a8d95d3470d46b35845c5_
+>>>>>>> Updated to Ghostscript 9.27 and latest 64-bit Chromium Sandbox.
 
 
 ## License
 
 *Ghost Trap* is open source software licensed under the Affero GPL:
 
-    Copyright (c) 2012-2014 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
+    Copyright (c) 2012-2019 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -168,3 +234,5 @@ To build Ghost Trap from source, here is a brief flow:
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
    
+
+

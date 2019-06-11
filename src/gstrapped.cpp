@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 PaperCut Software International Pty. Ltd.
+ * Copyright (c) 2012-2019 PaperCut Software International Pty. Ltd.
  * http://www.papercut.com/
  *
  * Author: Chris Dance <chris.dance@papercut.com>
@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sstream>
+#include <fstream>
 
 // Ghostscript DLL Header files
 #include <ierrors.h>
@@ -42,8 +43,8 @@
  * Ghost Trap version number starts at 1 and suffixes the Ghostscript version we've
  * tested/written against.
  */
-#define GHOST_TRAP_VERSION      "1.0.9.06"
-#define GHOST_TRAP_COPYRIGHT    "Copyright (c) 2012-2013 PaperCut Software International Pty. Ltd."
+#define GHOST_TRAP_VERSION      "1.3.9.27"
+#define GHOST_TRAP_COPYRIGHT    "Copyright (c) 2012-2019 PaperCut Software International Pty. Ltd."
 
 // Definitions
 typedef struct GSDLL_S {
@@ -57,12 +58,12 @@ typedef struct GSDLL_S {
         PFN_gsapi_init_with_args init_with_args;
         PFN_gsapi_run_string run_string;
         PFN_gsapi_exit exit;
-        PFN_gsapi_set_visual_tracer set_visual_tracer;
 } GSDLL;
 
 // Globals
 GSDLL global_gsdll;
 void *global_gsinstance;
+
 
 
 
@@ -170,8 +171,7 @@ static bool LoadGSDLL(GSDLL *gsdll) {
 /*
  * A convenience wrapper to read a registry keys using wstrings.
  */
-static LONG GetStringRegKey(HKEY hKey, const std::wstring &strValueName, std::wstring &strValue, const std::wstring &strDefaultValue)
-{
+static LONG GetStringRegKey(HKEY hKey, const std::wstring &strValueName, std::wstring &strValue, const std::wstring &strDefaultValue) {
     strValue = strDefaultValue;
     WCHAR szBuffer[512];
     DWORD dwBufferSize = sizeof(szBuffer);
@@ -190,7 +190,8 @@ static LONG GetStringRegKey(HKEY hKey, const std::wstring &strValueName, std::ws
  * parent directory (all files) is allowed.  Passing a relative file path will raise an error
  * and no white listing will occure.
  */
-static void AllowAccessToFile(sandbox::TargetPolicy* policy, wchar_t *file, BOOL parent_dir) {
+static void AllowAccessToFile(scoped_refptr<sandbox::TargetPolicy> policy, wchar_t *file, BOOL parent_dir) {
+
     wchar_t drive[8];
     wchar_t dir[512];
     wchar_t filename[512];
@@ -219,7 +220,7 @@ static void AllowAccessToFile(sandbox::TargetPolicy* policy, wchar_t *file, BOOL
             fprintf(stderr, "Ghost Trap: Invalid resource. Please use absolute paths on a local drive.\n");
             return;
         }
-        
+
         if (parent_dir) {
             _snwprintf_s(path_rule, MAX_PATH - 1, L"%s%s*", 
                                 drive, 
@@ -231,31 +232,29 @@ static void AllowAccessToFile(sandbox::TargetPolicy* policy, wchar_t *file, BOOL
                                 filename,
                                 ext);
         }
-            
+
         policy->AddRule(
             sandbox::TargetPolicy::SUBSYS_FILES, 
             sandbox::TargetPolicy::FILES_ALLOW_ANY, 
             path_rule
             );
     }
-
 }
 
 
 /*
  * Look through the standard Ghostscript cmd-line arguments looking for paths.
  * Expand relative and normalize all paths.  This is required as at the time of 
- * writing any open file request in the Google Chrome sandbox must be an absolute
+ * writing, any open file request in the Google Chrome sandbox must be an absolute
  * path.  This function will pass back a new **argv instance any any expanded
  * paths will be malloced buffers.
  * 
  * TODO: The input file argument is assumed to be the last argument. This is not
- * necasserially so via the -f option.
+ * necessarily so via the -f option.
  *
  * FIXME: What about other paths such as defining a custom libary files or fonts?
  */
 static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[]) {
-
     wchar_t **full_path_argv = (wchar_t **) calloc(argc, sizeof(full_path_argv[0]));
 
     if (full_path_argv == NULL) {
@@ -309,8 +308,7 @@ static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[]) {
  * 
  * IMPORTANT: This code does not run in the sandbox (runs in the parent process). Take care!
  */
-static void ApplyPolicy(sandbox::TargetPolicy* policy, int argc, wchar_t* argv[]) {
-
+static void ApplyPolicy(scoped_refptr<sandbox::TargetPolicy> policy, int argc, wchar_t* argv[]) {
     // Fix up and expand paths in the args
     wchar_t **nargv = ExpandPathsInArgs(argc, argv);
 
@@ -336,11 +334,10 @@ static void ApplyPolicy(sandbox::TargetPolicy* policy, int argc, wchar_t* argv[]
         return;
     }
 
-
     policy->AddRule(
         sandbox::TargetPolicy::SUBSYS_REGISTRY,
         sandbox::TargetPolicy::REG_ALLOW_READONLY, 
-        L"HKEY_LOCAL_MACHINE"
+        L"HKEY_CURRENT_USER"
         );
 
     // Allow READ access to OS keys (e.g. Locale lookup) 
@@ -369,7 +366,7 @@ static void ApplyPolicy(sandbox::TargetPolicy* policy, int argc, wchar_t* argv[]
     _snwprintf(gs_key, 256, L"SOFTWARE\\%hs\\%s", 
                         rv.product, 
                         dotversion);
-    
+
     // Allow READ access to directory on lib path. Find this by looking
     // up the registry key HKLM/Software/GPL Ghostscript/9.02/GS_LIB.
     // The value is stored is a ";" seperated path.
@@ -396,7 +393,7 @@ static void ApplyPolicy(sandbox::TargetPolicy* policy, int argc, wchar_t* argv[]
 
         RegCloseKey(hKey);
     } 
-    
+
     // Allow READ and WRITE access to default temp directory.
     {
         wchar_t temp_dir[MAX_PATH];
@@ -409,7 +406,7 @@ static void ApplyPolicy(sandbox::TargetPolicy* policy, int argc, wchar_t* argv[]
             dir_rule
             );
     }
-    
+
 
     // Allow READ access to C:\Windows\Fonts directory.
     {
@@ -426,13 +423,66 @@ static void ApplyPolicy(sandbox::TargetPolicy* policy, int argc, wchar_t* argv[]
 
     // Allow WRITE access to OutputFile target directory
     BOOL has_outfile = FALSE;
+    BOOL test_enabled = FALSE;
     int i;
     for (i = 0; i < argc; ++i) {
         wchar_t *p;
+
         if ((p = wcsstr(nargv[i], L"OutputFile=")) != NULL) {
             p += 11;
             AllowAccessToFile(policy, p, TRUE);
             has_outfile = TRUE;
+        }
+
+        if ((p = wcsstr(nargv[i], L"--test-sandbox")) != NULL) {
+            test_enabled = TRUE;
+        }
+
+        // Sandbox Testing - whitelist test data
+        if ((p = wcsstr(nargv[i], L"--fail-test=")) != NULL) {
+            p += 9;
+
+            /* Setup Test 1 for failure
+             * Allow write access to C:\Windows\Temp folder
+             */
+            if(wcscmp(p, L"1") == 0 && test_enabled) {
+                wchar_t win_dir[MAX_PATH];
+                GetWindowsDirectory(win_dir, MAX_PATH - 1);
+                wchar_t dir_rule[MAX_PATH];
+                _snwprintf(dir_rule, MAX_PATH - 1, L"%s\\Temp\\*", win_dir);
+                policy->AddRule(
+                    sandbox::TargetPolicy::SUBSYS_FILES, 
+                    sandbox::TargetPolicy::FILES_ALLOW_ANY, 
+                    dir_rule
+                );
+            }
+
+            /* Setup Test 2 for failure
+             * Allow read-only access to C:\Windows\notepad.exe
+             */
+            if(wcscmp(p, L"2") == 0 && test_enabled) {
+                wchar_t win_dir[MAX_PATH];
+                GetWindowsDirectory(win_dir, MAX_PATH - 1);
+                wchar_t dir_rule[MAX_PATH];
+                _snwprintf(dir_rule, MAX_PATH - 1, L"%s\\notepad.exe", win_dir);
+                policy->AddRule(
+                    sandbox::TargetPolicy::SUBSYS_FILES, 
+                    sandbox::TargetPolicy::FILES_ALLOW_READONLY, 
+                    dir_rule
+                );
+            }
+
+            /* Setup Test 3 for failure
+             * Allow read access to registry key HKCU\Environment
+             */
+            if(wcscmp(p, L"3") == 0 && test_enabled) {
+                // 
+                policy->AddRule(
+                    sandbox::TargetPolicy::SUBSYS_REGISTRY, 
+                    sandbox::TargetPolicy::REG_ALLOW_READONLY, 
+                    L"HKEY_CURRENT_USER\\Environment"
+                );
+            }
         }
     }
 
@@ -446,7 +496,6 @@ static void ApplyPolicy(sandbox::TargetPolicy* policy, int argc, wchar_t* argv[]
     if (*last_arg != L'-') {
        AllowAccessToFile(policy, last_arg, FALSE);
     }
-
 }
 
 
@@ -468,13 +517,12 @@ static int PreSandboxedInit(int argc, wchar_t* argv[]) {
  * Convert wchar to unicode.  Similar to function in gp_wutf8.c in Ghostscript,
  * however without the buffer length calculation problem on generation.
  */
-static int wchar_to_utf8(char *out, const wchar_t *in)
-{
+static int wchar_to_utf8(char *out, const wchar_t *in) {
     unsigned int i;
     unsigned int len = 1;
 
     if (out) {
-        while (i = (unsigned int)*in++) {
+        while ((i = (unsigned int)*in++)) {
             if (i < 0x80) {
                 *out++ = (char)i;
                 len++;
@@ -491,7 +539,7 @@ static int wchar_to_utf8(char *out, const wchar_t *in)
         }
         *out = 0;
     } else {
-        while (i = (unsigned int)*in++) {
+        while ((i = (unsigned int)*in++)) {
             if (i < 0x80) {
                 len++;
             } else if (i < 0x800) {
@@ -504,13 +552,64 @@ static int wchar_to_utf8(char *out, const wchar_t *in)
     return len;
 }
 
+/*
+ * This is an internal method to do a few simple checks to make sure our sandbox is working.  
+ * The build script will use this to verify that everything is working as expected.
+ * A non-zero exit code indicates a possible error that should be looked at.
+ *
+ * For the moment our tests are:
+ *    1 - Check that we can't write a file we should not - i.e. file in c:\Windows\Temp
+ *    2 - Check that we can't read files from the general os filesystem (c:\Windows\notepad.exe)
+ *    3 - Check that we can't read general registry entries (HKEY_CURRENT_USER\\Environment)
+ *
+ * The tests can be setup to fail (whitelisted parameters) by adding the --fail-test flag.
+ * e.g. 
+ *    --fail-test=1 [will fail test 1]
+ *    --fail-test=2 [will fail test 2]
+ */
+static int TestSandbox() {
+    /*
+     * If C:\Windows\Temp\test.txt is whitelisted via -sOutputFile or the last param
+     * then this will fail
+    */
+    std::ofstream output("C:\\Windows\\Temp\\test.txt");
+    if (output.is_open()) {        
+        // We shouldn't be able to read this file
+        return 61;
+    }
+
+    /* 
+     * Test 2
+     * If C:\Windows\\notepad.exe is the last parameter, this will succeed as we 
+     * are whitelisting the input file.
+    */ 
+    std::ifstream input("C:\\Windows\\notepad.exe", std::ios::binary);
+    if (input.is_open()) {
+        // Oh... we can read it! Oh no.... we can read something we were not expecting!!!
+        return 62;
+    }
+
+    /*
+     * Test 3
+     * Check that we can't read the registry
+     */
+    HKEY hKey;
+    DWORD Ret;
+    wchar_t skey[256] = L"Environment";
+
+    Ret = RegOpenKeyEx(HKEY_CURRENT_USER, skey, 0, KEY_READ, &hKey);
+    if (Ret == ERROR_SUCCESS) {
+        return 63;
+    }
+
+    return 0;
+}
 
 /*
  * The main method (sandboxed). Here we do the heavy lifting in the sandbox.  i.e.
  * We hand the hard work off to the Ghostscript DLL :-)
  */
 static int SandboxedMain(int argc, wchar_t* argv[]) {
-
     // If -h, print out Ghost Trap information as well.
     for (int i = 0; i < argc; ++i) {
         if (wcscmp(argv[i], L"-h") == 0) {
@@ -520,8 +619,12 @@ static int SandboxedMain(int argc, wchar_t* argv[]) {
             printf("\n");
             break;
         }
+        // Used for developer testing only (not documented in usage)
+        if (wcscmp(argv[i], L"--test-sandbox") == 0) {
+            return TestSandbox();
+        }
     }
-    
+
     wchar_t **full_path_argv = ExpandPathsInArgs(argc, argv);
   
     /* Duplicate wide args as utf8 */
@@ -566,7 +669,7 @@ static int SandboxedMain(int argc, wchar_t* argv[]) {
 
     code1 = global_gsdll.exit(global_gsinstance);
 
-    if ((code == 0) || (code == e_Quit)) {
+    if ((code == 0) || (code == gs_error_Quit)) {
         code = code1;
     }
 
@@ -583,7 +686,7 @@ error:
         free(nargv);
     }
 
-    if (!((code == 0) || (code == e_Quit))) {
+    if (!((code == 0) || (code == gs_error_Quit))) {
         return abs(code);
     }
     return 0;

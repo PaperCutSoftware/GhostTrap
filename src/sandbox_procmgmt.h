@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 PaperCut Software International Pty. Ltd.
+ * Copyright (c) 2012-2019 PaperCut Software International Pty. Ltd.
  * http://www.papercut.com/
  *
  * Author: Chris Dance <chris.dance@papercut.com>
@@ -9,18 +9,18 @@
  * Dual License: GPL or MIT
  *
  * ----
- * Library code to help wrap a Windows command-line (console) application is the
- * Google Chromium Sandbox.  This code was originally develop for the Ghost Trap
+ * Library code to help wrap a Windows command-line (console) application to the
+ * Google Chromium Sandbox. This code was originally developed for the Ghost Trap
  * open source project, however may also serve as a useful library for sandboxing 
  * any console application.
  * 
  * This sandboxing library wraps the Google Chromium Sandbox sub-project and
  * provides the required infastructure required to support most Windows console
  * applications.  The sandbox works by applying a policy in a parent process,
- * then exec'ing a child to run restricted code.  Communication between the parent
- * and child to facilitate the trasfer of STDIN/STDOUT/STDERR, is via named pipes.
+ * then executing a child to run restricted code.  Communication between the parent
+ * and child to facilitate the transfer of STDIN/STDOUT/STDERR, is via named pipes.
  *
- * The general approch for wrapping an console application would be as follows:
+ * The general approach for wrapping an console application would be as follows:
  *
  *   1) Rename your wmain method to sandboxed_wmain.
  * 
@@ -63,7 +63,7 @@
 
 #include <sandbox/win/src/sandbox.h>
 
-typedef void (*SandboxPolicyFn)(sandbox::TargetPolicy *policy, int argc, wchar_t* argv[]);
+typedef void (*SandboxPolicyFn)(scoped_refptr<sandbox::TargetPolicy> policy, int argc, wchar_t* argv[]);
 typedef int (*ConsoleWMainFn)(int argc, wchar_t* argv[]);
 
 int RunConsoleAppInSandbox(SandboxPolicyFn policy_provider, 
