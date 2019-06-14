@@ -1,9 +1,7 @@
 ; Copyright (c) 2012-2014 PaperCut Software International Pty. Ltd.
 ; Author: Chris Dance <chris.dance@papercut.com>
 ; 
-; License: GNU GPL v3 - See project LICENSE file.
-;                                                        z
-; $Id: $
+; License: GNU Affero GPL v3 - See project LICENSE file.
 ;
 ; Ghost Trap Inno Setup based installer script.
 ;
