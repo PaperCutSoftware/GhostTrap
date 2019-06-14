@@ -129,90 +129,41 @@ The following future refinements are planned:
 
 ## Authors
 
-## Building GhostTrap
+![PaperCut Software Logo](http://www.papercut.com/images/logo_papercut.png)
+
+*Ghost Trap* is open source software developed by Chris Dance with the support of 
+[PaperCut Software](http://www.papercut.com/).
+
 
 ### Requirements
 
-* [GhostTrap Source Code](https://github.com/PaperCutSoftware/GhostTrap)
-* [Chromium (source checkout and build instructions)](https://chromium.googlesource.com/chromium/src/+/master/docs/windows_build_instructions.md)
-* [GhostPDL Source Code](https://www.ghostscript.com/download/gpdldnld.html)
-* [Inno Setup](http://www.jrsoftware.org/isinfo.php)
+ *  Visual Studio 2019 or 2017
+ *  [Inno Setup 6](http://www.jrsoftware.org/isinfo.php)
 
-### Building
 
-##### Download the GhostTrap source code. You should have the following directory layout:
+## Building
 
-```bash
-GhostTrap
-├── build.bat
-├── images
-│   ├── ghostbusters-ghost-trap.jpg
-│   └── ghostbusters-ghost-trap-sized.jpg
-├── installer
-│   └── win
-│       ├── ghost-trap.iss
-│       ├── installer-logo-large.bmp
-│       └── install-info.rtf
-├── LICENSE.rtf
-├── LICENSE.txt
-├── README.md
-├── src
-│   ├── gstrapped.cpp
-│   ├── sandbox_procmgmt.cpp
-│   └── sandbox_procmgmt.h
-├── tests
-└── third-party
-    └── README.txt
-```
+ 1. Check out the [Ghost Trap Source Code](https://github.com/PaperCutSoftware/GhostTrap).
 
-##### Fetch the Chromium source code and setup the build environtment. 
-_Follow the instructions carefully!_
+ 2. Follow the [Chromium source checkout and build instructions](https://chromium.googlesource.com/chromium/src/+/master/docs/windows_build_instructions.md).
 
-Note: Build your chromium directory inside the GhostTrap\third-party folder.
+     *  When creating the `chromium` directory for source checkout, create it at `GhostTrap/third-party/chromium`.
+     *  Take note of the `--no-history` flag to `fetch`, which will significantly speed up the checkout.
+     *  Ensure that `gn gen out\Default` runs successfully.
+     *  The Visual Studio setup steps are not necessary.
 
-```bash
-GhostTrap
-├── build.bat
-├── *
-├── src
-├── tests
-└── third-party
-    └── chromium ⬅ ⬅ ⬅
-```
+ 3. Download the [GhostPDL source](https://www.ghostscript.com/download/gpdldnld.html) to
+    `GhostTrap/third-party/ghostpdl`.
 
-Before the next step, make sure you're able to run the following command:
-```bash
-GhostTrap\third-party\chromium\src> gn gen out\Default
-```
+ 4. Compile 64-bit binaries for Ghostscript, GhostPCL and GhostXPS. At the time of writing, this involved:
 
-##### Download the GhostPDL source code and copy the whole folder inside third-party as ghostpdl.
+     *  Opening `ghostpdl/windows/GhostPDL.sln` in Visual Studio to trigger a project structure upgrade.
+     *  Running `msbuild windows/GhostPDL.sln /p:Configuration=Release /p:Platform=x64` from the Developer Command
+        Prompt.
 
-Compile 64-bit exe's of Ghostscript, GhostPCL and GhostXPS 
+ 5. Run the `GhostTrap/build.bat` build script.
 
-```bash
-GhostTrap
-├── build.bat
-├── *
-├── src
-├── tests
-└── third-party
-    ├── chromium
-    └── ghostpdl ⬅ ⬅ ⬅
-```
-
-##### Install Inno Setup
-
-##### Run the build script
-```bash
-GhostTrap> build.bat
-```
-
-##### The installer will be built in GhostTrap\target\ghost-trap-installer-1.2.9.27
-
-### _Successfully built with the following versions:_
-##### _Ghostscript source code: 9.27_
-##### _Chromium source code commit: 2d57e5b8afc6d01b344a8d95d3470d46b35845c5_
->>>>>>> Updated to Ghostscript 9.27 and latest 64-bit Chromium Sandbox.
+    The installer will be output to `GhostTrap/target/ghost-trap-installer-${version}.exe`.
 
 
 ## License
