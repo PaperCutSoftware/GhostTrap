@@ -47,24 +47,24 @@ supplied with Ghostscript.
 
 To convert the Escher PostScript example into a PNG image *WITHOUT* sandboxing (this is just standard Ghostscript):
 
-    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c.exe" -q -dSAFER -dNOPAUSE -dBATCH ^
+    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gsc.exe" -q -dSAFER -dNOPAUSE -dBATCH ^
                  -sDEVICE=png16m -sOutputFile=escher.png ^
                  "C:\Program Files (x86)\GhostTrap\examples\escher.ps"
 
 
 To convert the same Escher example into a PNG image *WITH* sandboxing using *Ghost Trap*:
 
-    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c-trapped.exe" -q -dNOPAUSE -dBATCH ^
+    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gsc-trapped.exe" -q -dNOPAUSE -dBATCH ^
                  -sDEVICE=png16m -sOutputFile=escher.png ^
                  "C:\Program Files (x86)\GhostTrap\examples\escher.ps"
 
 To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
 
-    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c-trapped.exe" -q -dNOPAUSE -dBATCH ^
+    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gsc-trapped.exe" -q -dNOPAUSE -dBATCH ^
                  -sDEVICE=jpeg "-sOutputFile=annots page %d.jpg" ^
                  "C:\Program Files (x86)\GhostTrap\examples\annots.pdf"
 
-```gswin32c-trapped.exe``` is the sandboxed version of ``gswin32c.exe``.  It should behave the same
+`gsc-trapped.exe` is the sandboxed version of `gsc.exe`.  It should behave the same
 as the standard Ghostscript console command as [documented](http://ghostscript.com/doc/9.07/Use.htm),
 with the following known exceptions:
 
@@ -75,7 +75,7 @@ with the following known exceptions:
 
 ## How it works
 
-```gswin32c-trapped.exe``` first determines a whitelist of resources required to perform the conversion.  It then 
+`gsc-trapped.exe` first determines a whitelist of resources required to perform the conversion.  It then 
 execs a child process within a strongly contained sandbox to perform the task. The whitelist of allowed resources 
 is dynamically constructed by determining the input file and output file/directory from the supplied 
 command-line arguments. The Ghostscript interpreter's access rights is restricted and it may only access:
