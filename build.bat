@@ -117,6 +117,7 @@ if %errorlevel% NEQ 0 goto builderror
 REM #
 REM # Test GhostTrap
 REM #
+copy "..\..\ghostpdl\bin\gsdll64.dll" out\Default\ /Y > NUL
 call cd out\Default\ > NUL
 echo Testing GhostTrap...
 call gswin64c-trapped.exe --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
