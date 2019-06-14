@@ -67,7 +67,7 @@ REM #
 echo ====  Compiling 64-bit  ====
 
 REM Append extra build info to the BUILD.gn
->nul find "gswin64c" %~dp0third-party\chromium\src\sandbox\win\BUILD.gn && (
+>nul find "gsc-trapped" %~dp0third-party\chromium\src\sandbox\win\BUILD.gn && (
   goto buildinfoexists
 ) || (
   goto buildinfomissing
@@ -75,7 +75,7 @@ REM Append extra build info to the BUILD.gn
 
 :buildinfomissing
 echo.>>%~dp0chromium\src\sandbox\win\BUILD.gn
-echo executable("gswin64c-trapped") {>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo executable("gsc-trapped") {>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
 echo   sources = [>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
 echo      "ghosttrap/gstrapped.cpp",>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
 echo      "ghosttrap/sandbox_procmgmt.cpp",>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
@@ -111,7 +111,7 @@ if %errorlevel% NEQ 0 goto builderror
 call gn gen out\Default --args="is_debug=false" > NUL
 if %errorlevel% NEQ 0 goto builderror
 
-call autoninja -C out\Default sandbox/win:gswin64c-trapped > NUL
+call autoninja -C out\Default sandbox/win:gsc-trapped > NUL
 if %errorlevel% NEQ 0 goto builderror
 
 REM #
@@ -120,7 +120,7 @@ REM #
 copy "..\..\ghostpdl\bin\gsdll64.dll" out\Default\ /Y > NUL
 call cd out\Default\ > NUL
 echo Testing Ghost Trap...
-call gswin64c-trapped.exe --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
+call gsc-trapped.exe --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
 if %errorlevel% NEQ 0 goto builderror
 
 call cd %startdir% > NUL
@@ -159,15 +159,15 @@ mkdir target\installfiles\Resource\Init > NUL
 mkdir target\installfiles\Resource\SubstCID > NUL
 
 REM # Ghost Trap exe, README and LICENSE files
-copy "third-party\chromium\src\out\Default\gswin64c-trapped.exe" target\installfiles\bin\gsc-trapped.exe /Y > NUL
-copy "third-party\chromium\src\out\Default\gswin64c-trapped.exe" target\installfiles\bin\gswin32c-trapped.exe /Y > NUL
+copy "third-party\chromium\src\out\Default\gsc-trapped.exe" target\installfiles\bin\gsc-trapped.exe /Y > NUL
+copy "third-party\chromium\src\out\Default\gsc-trapped.exe" target\installfiles\bin\gswin32c-trapped.exe /Y > NUL
 copy LICENSE* target\installfiles /Y > NUL
 copy README* target\installfiles /Y > NUL
 
 REM # Ghostscript files (mirroring standard install structure)
-copy "third-party\ghostpdl\bin\gswin64.exe" target\installfiles\bin /Y > NUL
+copy "third-party\ghostpdl\bin\gswin64.exe" target\installfiles\bin\gs.exe /Y > NUL
 copy "third-party\ghostpdl\bin\gswin64.exe" target\installfiles\bin\gswin32.exe /Y > NUL
-copy "third-party\ghostpdl\bin\gswin64c.exe" target\installfiles\bin /Y > NUL
+copy "third-party\ghostpdl\bin\gswin64c.exe" target\installfiles\bin\gsc.exe /Y > NUL
 copy "third-party\ghostpdl\bin\gswin64c.exe" target\installfiles\bin\gswin32c.exe /Y > NUL
 copy "third-party\ghostpdl\bin\gsdll64.dll" target\installfiles\bin /Y > NUL
 copy "third-party\ghostpdl\bin\gpcl6win64.exe" target\installfiles\bin\pcl6.exe /Y > NUL

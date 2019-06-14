@@ -20,7 +20,7 @@
   #define gs_version "9.27"
 #endif
 
-#define gs_c_exe "gswin64c.exe"
+#define gs_c_exe "gsc.exe"
 #define gs_dll "gsdll64.dll"
 
 AppName={#app_name}
