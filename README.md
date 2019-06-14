@@ -1,5 +1,4 @@
-Ghost Trap - Ghostscript trapped in a sandbox
-======
+# Ghost Trap - Ghostscript trapped in a sandbox
 
 *Ghost Trap* is used to securely convert PostScript and PDF files from untrusted sources into images.
 It's a modified distribution of the [GPL Ghostscript PDL interpreter](http://www.ghostscript.com/) secured and 
@@ -18,6 +17,7 @@ securely holds Ghostscripts in a laser containment field :-)
 ## Download
 
 *Windows:* [ghost-trap-installer.exe](http://cdn.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.2.9.10.exe)  (version 1.2)
+
 
 ## Motivation
 
@@ -68,9 +68,9 @@ To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
 as the standard Ghostscript console command as [documented](https://ghostscript.com/doc/9.27/Use.htm),
 with the following known exceptions:
 
- * The input and output files must be on a local disk (no network shares).
- * The ```-dSAFER``` mode is always enabled by default.
- * Defining custom/extra FONT or LIB paths on the command line is not allowed.
+ *  The input and output files must be on a local disk (no network shares).
+ *  The `-dSAFER` mode is always enabled by default.
+ *  Defining custom/extra FONT or LIB paths on the command line is not allowed.
 
 
 ## How it works
@@ -80,16 +80,17 @@ execs a child process within a strongly contained sandbox to perform the task. T
 is dynamically constructed by determining the input file and output file/directory from the supplied 
 command-line arguments. The Ghostscript interpreter's access rights is restricted and it may only access:
 
- * Read only access to the Windows Fonts directory.
- * Read only access to application-level registry keys (HKLM\Software\GPL Ghostscript).
- * Read only access to Ghostscript's lib folder resources.
- * Read only access to the input file.
- * Write access to the user-level Temp directory.
- * Write access to the output directory (OutputFile).
+ *  Read only access to the Windows Fonts directory.
+ *  Read only access to application-level registry keys (HKLM\Software\GPL Ghostscript).
+ *  Read only access to Ghostscript's lib folder resources.
+ *  Read only access to the input file.
+ *  Write access to the user-level Temp directory.
+ *  Write access to the output directory (OutputFile).
 
 The sandbox also constrains the execution process on an isolated desktop session to prevent 
 [shatter attacks](http://en.wikipedia.org/wiki/Shatter_attack) and limits IPC and other potential
 escape vectors.
+
 
 ## Release History
 
@@ -122,9 +123,9 @@ escape vectors.
 
 The following future refinements are planned:
 
- * Sandbox other executable in the GhostPDL project (e.g ```pcl6.exe```).
- * Support custom FONT and LIB paths defined on the command line (read only access).
- * Look at sandbox options on Linux.
+ *  Sandbox other executables in the GhostPDL project (e.g `pcl6.exe`).
+ *  Support custom FONT and LIB paths defined on the command line (read only access).
+ *  Look at sandbox options on Linux.
 
 
 ## Authors
