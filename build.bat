@@ -74,7 +74,7 @@ REM Append extra build info to the BUILD.gn
 )
 
 :buildinfomissing
-echo.>>%~dp0chromium\src\sandbox\win\BUILD.gn
+echo.>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
 echo executable("gsc-trapped") {>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
 echo   sources = [>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
 echo      "ghosttrap/gstrapped.cpp",>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
@@ -95,17 +95,17 @@ echo }>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
 
 REM Copy the Ghost Trap source code to the Chromium project
 call mkdir %~dp0third-party\chromium\src\sandbox\win\ghosttrap > NUL
-call xcopy %~dp0src %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ /Y /E /s > NUL
+call xcopy %~dp0src %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ /Y /E /S > NUL
 
 REM Copy the Ghostscript source code to the Chromium project
 call mkdir %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ghostscript > NUL
-call xcopy %~dp0third-party\ghostpdl %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ghostscript\ /Y /E /s > NUL
+call xcopy %~dp0third-party\ghostpdl %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ghostscript\ /Y /E /S > NUL
 
 REM #
 REM # REM Start the build
 REM #
 
-call cd third-party\chromium\src\ > NUL
+call cd "%~dp0third-party\chromium\src\" > NUL
 if %errorlevel% NEQ 0 goto builderror
 
 call gn gen out\Default --args="is_debug=false" > NUL
@@ -117,87 +117,53 @@ if %errorlevel% NEQ 0 goto builderror
 REM #
 REM # Test Ghost Trap
 REM #
-copy "..\..\ghostpdl\bin\gsdll64.dll" out\Default\ /Y > NUL
-call cd out\Default\ > NUL
 echo Testing Ghost Trap...
-call gsc-trapped.exe --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
-if %errorlevel% NEQ 0 goto builderror
-
-call cd %startdir% > NUL
+copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0third-party\chromium\src\out\Default\" /Y > NUL
+call "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
 if %errorlevel% NEQ 0 goto builderror
 
 REM #
 REM # Create target dir mirroring Ghostscript standard install.
 REM #
-rmdir /s /q "target" > NUL
+rmdir /s /q "%~dp0target" > NUL
 
 REM # Small sleep so we don't hit locked files.
 ping -n 3 127.0.0.1 > NUL
 
 echo Copying files...
 
-mkdir target > NUL
-mkdir target\installfiles > NUL
-mkdir target\installfiles\bin > NUL
-mkdir target\installfiles\doc > NUL
-mkdir target\installfiles\doc\images > NUL
-mkdir target\installfiles\doc\pclxps > NUL
-mkdir target\installfiles\examples > NUL
-mkdir target\installfiles\examples\cjk > NUL
-mkdir target\installfiles\iccprofiles > NUL
-mkdir target\installfiles\lib > NUL
-mkdir target\installfiles\Resource > NUL
-mkdir target\installfiles\Resource\CIDFont > NUL
-mkdir target\installfiles\Resource\CIDFSubst > NUL
-mkdir target\installfiles\Resource\CMap > NUL
-mkdir target\installfiles\Resource\ColorSpace > NUL
-mkdir target\installfiles\Resource\Decoding > NUL
-mkdir target\installfiles\Resource\Encoding > NUL
-mkdir target\installfiles\Resource\Font > NUL
-mkdir target\installfiles\Resource\IdiomSet > NUL
-mkdir target\installfiles\Resource\Init > NUL
-mkdir target\installfiles\Resource\SubstCID > NUL
+mkdir "%~dp0target" > NUL
+mkdir "%~dp0target\installfiles" > NUL
+mkdir "%~dp0target\installfiles\bin" > NUL
 
 REM # Ghost Trap exe, README and LICENSE files
-copy "third-party\chromium\src\out\Default\gsc-trapped.exe" target\installfiles\bin\gsc-trapped.exe /Y > NUL
-copy "third-party\chromium\src\out\Default\gsc-trapped.exe" target\installfiles\bin\gswin32c-trapped.exe /Y > NUL
-copy LICENSE* target\installfiles /Y > NUL
-copy README* target\installfiles /Y > NUL
+copy "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" "%~dp0target\installfiles\bin\gsc-trapped.exe" /Y > NUL
+copy "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" "%~dp0target\installfiles\bin\gswin32c-trapped.exe" /Y > NUL
+copy "%~dp0LICENSE*" "%~dp0target\installfiles" /Y > NUL
+copy "%~dp0README*" "%~dp0target\installfiles" /Y > NUL
 
 REM # Ghostscript files (mirroring standard install structure)
-copy "third-party\ghostpdl\bin\gswin64.exe" target\installfiles\bin\gs.exe /Y > NUL
-copy "third-party\ghostpdl\bin\gswin64.exe" target\installfiles\bin\gswin32.exe /Y > NUL
-copy "third-party\ghostpdl\bin\gswin64c.exe" target\installfiles\bin\gsc.exe /Y > NUL
-copy "third-party\ghostpdl\bin\gswin64c.exe" target\installfiles\bin\gswin32c.exe /Y > NUL
-copy "third-party\ghostpdl\bin\gsdll64.dll" target\installfiles\bin /Y > NUL
-copy "third-party\ghostpdl\bin\gpcl6win64.exe" target\installfiles\bin\pcl6.exe /Y > NUL
-copy "third-party\ghostpdl\bin\gpcl6dll64.dll" target\installfiles\bin /Y > NUL
-copy "third-party\ghostpdl\bin\gxpswin64.exe" target\installfiles\bin\gxps.exe /Y > NUL
-copy "third-party\ghostpdl\bin\gxpsdll64.dll" target\installfiles\bin /Y > NUL
-copy "third-party\ghostpdl\doc\*.*" target\installfiles\doc /Y > NUL
-copy "third-party\ghostpdl\doc\images\*.*" target\installfiles\doc\images /Y > NUL
-copy "third-party\ghostpdl\doc\pclxps\*.*" target\installfiles\doc\pclxps /Y > NUL
-copy "third-party\ghostpdl\examples\*.*" target\installfiles\examples /Y > NUL
-copy "third-party\ghostpdl\examples\cjk\*.*" target\installfiles\examples\cjk /Y > NUL
-copy "third-party\ghostpdl\iccprofiles\*.*" target\installfiles\iccprofiles /Y > NUL
-copy "third-party\ghostpdl\lib\*.*" target\installfiles\lib /Y > NUL
-copy "third-party\ghostpdl\Resource\CIDFont\*.*" target\installfiles\Resource\CIDFont /Y > NUL
-copy "third-party\ghostpdl\Resource\CIDFSubst\*.*" target\installfiles\Resource\CIDFSubst /Y > NUL
-copy "third-party\ghostpdl\Resource\CMap\*.*" target\installfiles\Resource\CMap /Y > NUL
-copy "third-party\ghostpdl\Resource\ColorSpace\*.*" target\installfiles\Resource\ColorSpace /Y > NUL
-copy "third-party\ghostpdl\Resource\Decoding\*.*" target\installfiles\Resource\Decoding /Y > NUL
-copy "third-party\ghostpdl\Resource\Encoding\*.*" target\installfiles\Resource\Encoding /Y > NUL
-copy "third-party\ghostpdl\Resource\Font\*.*" target\installfiles\Resource\Font /Y > NUL
-copy "third-party\ghostpdl\Resource\IdiomSet\*.*" target\installfiles\Resource\IdiomSet /Y > NUL
-copy "third-party\ghostpdl\Resource\Init\*.*" target\installfiles\Resource\Init /Y > NUL
-copy "third-party\ghostpdl\Resource\SubstCID\*.*" target\installfiles\Resource\SubstCID /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gswin64.exe" "%~dp0target\installfiles\bin\gs.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gswin64.exe" "%~dp0target\installfiles\bin\gswin32.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gswin64c.exe" "%~dp0target\installfiles\bin\gsc.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gswin64c.exe" "%~dp0target\installfiles\bin\gswin32c.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gpcl6win64.exe" "%~dp0target\installfiles\bin\pcl6.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gpcl6dll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gxpswin64.exe" "%~dp0target\installfiles\bin\gxps.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gxpsdll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL
+xcopy "%~dp0third-party\ghostpdl\doc" "%~dp0target\installfiles\doc\" /Y /S > NUL
+xcopy "%~dp0third-party\ghostpdl\examples" "%~dp0target\installfiles\examples\" /Y /S > NUL
+xcopy "%~dp0third-party\ghostpdl\iccprofiles" "%~dp0target\installfiles\iccprofiles\" /Y /S > NUL
+xcopy "%~dp0third-party\ghostpdl\lib" "%~dp0target\installfiles\lib\" /Y /S > NUL
+xcopy "%~dp0third-party\ghostpdl\Resource" "%~dp0target\installfiles\Resource\" /Y /S > NUL
 
 REM #
 REM # Run Inno install script to build the installer
 REM #
 
 echo Building installer...
-"%INNO_COMPILER%" "/dapp_version=%GHOST_TRAP_VERSION%" "/dgs_version=%GS_VERSION_MAJOR%.%GS_VERSION_MINOR%" installer\win\ghost-trap.iss /q
+"%INNO_COMPILER%" "/dapp_version=%GHOST_TRAP_VERSION%" "/dgs_version=%GS_VERSION_MAJOR%.%GS_VERSION_MINOR%" "%~dp0installer\win\ghost-trap.iss" /q
 if %errorlevel% NEQ 0 goto builderror
 
 
