@@ -65,7 +65,7 @@ To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
                  "C:\Program Files (x86)\GhostTrap\examples\annots.pdf"
 
 `gsc-trapped.exe` is the sandboxed version of `gsc.exe`.  It should behave the same
-as the standard Ghostscript console command as [documented](http://ghostscript.com/doc/9.07/Use.htm),
+as the standard Ghostscript console command as [documented](https://ghostscript.com/doc/9.27/Use.htm),
 with the following known exceptions:
 
  * The input and output files must be on a local disk (no network shares).
