@@ -97,7 +97,7 @@ REM Copy the ghosttrap source code to the Chromium project
 call mkdir %~dp0third-party\chromium\src\sandbox\win\ghosttrap > NUL
 call xcopy %~dp0src %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ /Y /E /s > NUL
 
-REM Copy the ghosttrap source code to the Chromium project
+REM Copy the Ghostscript source code to the Chromium project
 call mkdir %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ghostscript > NUL
 call xcopy %~dp0third-party\ghostpdl %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ghostscript\ /Y /E /s > NUL
 
