@@ -57,6 +57,11 @@ BeveledLabel={#app_name} {#app_version}
 
 [Files]
 Source: *; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
+; Copy (64-bit) binaries to legacy 32-bit filenames for backwards compatibility (of path references, not of 32-bit OS)
+Source: bin\gsc-trapped.exe; DestDir: {app}\bin\; DestName: gswin32c-trapped.exe;
+Source: bin\gs.exe; DestDir: {app}\bin\; DestName: gswin32.exe;
+Source: bin\gsc.exe; DestDir: {app}\bin\; DestName: gswin32c.exe;
+
 
 [Registry]
 ; Add some keys that might help us in the future

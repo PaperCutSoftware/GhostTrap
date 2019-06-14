@@ -138,15 +138,12 @@ mkdir "%~dp0target\installfiles\bin" > NUL
 
 REM # Ghost Trap exe, README and LICENSE files
 copy "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" "%~dp0target\installfiles\bin\gsc-trapped.exe" /Y > NUL
-copy "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" "%~dp0target\installfiles\bin\gswin32c-trapped.exe" /Y > NUL
 copy "%~dp0LICENSE*" "%~dp0target\installfiles" /Y > NUL
 copy "%~dp0README*" "%~dp0target\installfiles" /Y > NUL
 
 REM # Ghostscript files (mirroring standard install structure)
 copy "%~dp0third-party\ghostpdl\bin\gswin64.exe" "%~dp0target\installfiles\bin\gs.exe" /Y > NUL
-copy "%~dp0third-party\ghostpdl\bin\gswin64.exe" "%~dp0target\installfiles\bin\gswin32.exe" /Y > NUL
 copy "%~dp0third-party\ghostpdl\bin\gswin64c.exe" "%~dp0target\installfiles\bin\gsc.exe" /Y > NUL
-copy "%~dp0third-party\ghostpdl\bin\gswin64c.exe" "%~dp0target\installfiles\bin\gswin32c.exe" /Y > NUL
 copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL
 copy "%~dp0third-party\ghostpdl\bin\gpcl6win64.exe" "%~dp0target\installfiles\bin\pcl6.exe" /Y > NUL
 copy "%~dp0third-party\ghostpdl\bin\gpcl6dll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL
