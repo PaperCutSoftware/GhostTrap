@@ -93,29 +93,29 @@ escape vectors.
 
 ## Release History
 
-**2019-06-03**
- * Now using the latest 64-bit Chromium sandbox
- * Recompiled against the latest version of Ghostscript (9.27)
- * Compiled using Clang by leveraging Chromium's BUILD.gn system
-* Rolled to version 1.3.9.27
+### [1.3.9.27] - 2019-06-14
+ *  __Breaking change: installer now includes 64-bit binaries only.__
+ *  Updated to Ghostscript 9.27.
+ *  Updated to the latest Chromium Sandbox (as of [2019-04-14](https://chromium.googlesource.com/chromium/src/+/2d57e5b8afc6d01b344a8d95d3470d46b35845c5)).
+ *  The build script now builds 64-bit binaries (only). The architecture is no longer part of the executable names. I.e.
+    `win32` and `win64` are dropped from the names.
+ *  For backwards compatibility (path references to binaries), the installer script copies the 64-bit binaries to their
+    old 32-bit named equivalents. E.g. `gswin32c-trapped.exe` is a copy of `gsc-trapped.exe`.
 
-**2013-10-11**
- * Recompiled against latest version of Ghostscript (9.10)
- * Rolled to version 1.2.9.10
+### [1.2.9.10] - 2013-10-11
+ *  Updated to Ghostscript 9.10.
 
-**2013-03-04**
- * Addressed an issue that would result in Ghost Trap returning the wrong exit code.
- * Rolled to version 1.2
+### [1.2.9.07] - 2013-03-04
+ *  Addressed an issue that would result in Ghost Trap returning the wrong exit code.
 
-**2013-03-01**
- * Compiled against Ghostscript 9.07.
- * ```-dSAFER``` is now and enforced default.
- * Updated license to AFFERO GPL.
- * Minor code cleanup to remove some FIXME's.
- * Rolled to version 1.1
+### [1.1.9.07] - 2013-03-01
+ *  Updated to Ghostscript 9.07.
+ *  `-dSAFER` is now an enforced default.
+ *  Updated license to Affero GPL.
+ *  Minor code cleanup to remove some FIXME's.
 
-**2013-01-14** 
- * Initial public release.
+### [1.0.9.06] - 2013-01-14 
+ *  Initial public release.
 
 
 ## Future
@@ -233,6 +233,10 @@ GhostTrap> build.bat
 
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-   
 
 
+[1.3.9.27]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.2.9.10...v1.3.9.27
+[1.2.9.10]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.2.9.07...v1.2.9.10
+[1.2.9.07]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.1.9.07...v1.2.9.07
+[1.1.9.07]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.0.9.06...v1.1.9.07
+[1.0.9.06]: https://github.com/PaperCutSoftware/GhostTrap/releases/tag/v1.0.9.06
