@@ -38,8 +38,8 @@ goto builderror
 :chromesrcok
 
 if exist %~dp0src goto ghosttrapsrcok
-echo Error: Unable to locate the GhostTrap project source.
-echo Please ensure the GhostTrap source is located at:
+echo Error: Unable to locate the Ghost Trap project source.
+echo Please ensure the Ghost Trap source is located at:
 echo     %~dp0src
 goto builderror
 :ghosttrapsrcok
@@ -93,7 +93,7 @@ echo   ]>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
 echo }>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
 :buildinfoexists
 
-REM Copy the ghosttrap source code to the Chromium project
+REM Copy the Ghost Trap source code to the Chromium project
 call mkdir %~dp0third-party\chromium\src\sandbox\win\ghosttrap > NUL
 call xcopy %~dp0src %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ /Y /E /s > NUL
 
@@ -115,11 +115,11 @@ call autoninja -C out\Default sandbox/win:gswin64c-trapped > NUL
 if %errorlevel% NEQ 0 goto builderror
 
 REM #
-REM # Test GhostTrap
+REM # Test Ghost Trap
 REM #
 copy "..\..\ghostpdl\bin\gsdll64.dll" out\Default\ /Y > NUL
 call cd out\Default\ > NUL
-echo Testing GhostTrap...
+echo Testing Ghost Trap...
 call gswin64c-trapped.exe --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
 if %errorlevel% NEQ 0 goto builderror
 
