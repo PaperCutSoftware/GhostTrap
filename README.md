@@ -12,10 +12,7 @@ For the less technical audience  *Ghost Trap* was designed with the help of
 It can be simply explained as portable [Ecto Containment Unit](http://www.gbfans.com/equipment/ghost-trap/) which
 securely holds Ghostscripts in a laser containment field :-)
 
-<a href="http://www.gbfans.com/equipment/ghost-trap/" 
-    title="Ghostbusters Fan -  love the '80's! (used as a parody)">
-    <img src="https://raw.githubusercontent.com/PaperCutSoftware/GhostTrap/master/images/ghostbusters-ghost-trap-sized.jpg">
-</a>
+[![Ghost Trap from Ghostbusters](https://raw.githubusercontent.com/PaperCutSoftware/GhostTrap/master/images/ghostbusters-ghost-trap-sized.jpg)](https://www.gbfans.com/equipment/ghost-trap/)
 
 
 ## Download
