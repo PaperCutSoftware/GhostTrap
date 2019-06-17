@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 PaperCut Software International Pty. Ltd.
+ * Copyright (c) 2012-2019 PaperCut Software International Pty. Ltd.
  * http://www.papercut.com/
  *
  * Author: Chris Dance <chris.dance@papercut.com>
@@ -163,7 +163,7 @@ static DWORD WINAPI ProvideStdIn(void *param) {
 
 /*
  * The parent (unsandboxed process).  This function intializes the sandbox service broker,
- * setups up the piples, applies the security policy, and exec's and monitors the child
+ * sets up the pipes, applies the security policy, and then executes and monitors the child
  * process.
  */
 static int RunParent(int argc, wchar_t* argv[], 
@@ -171,17 +171,18 @@ static int RunParent(int argc, wchar_t* argv[],
                         SandboxPolicyFn policy_provider) {
 
     DWORD process_id = GetCurrentProcessId();
-
+    sandbox::ResultCode result;
+    
     // Start setting up the sandbox.
-    if (0 != broker_service->Init()) {
+    if (0 != (result = broker_service->Init())) {
         fprintf(stderr, "Sandbox: Failed to initialize the sandbox - BrokerServices object\n");
         return 50;
     }
 
     // Apply our policy
-    sandbox::TargetPolicy* targetPolicy = broker_service->CreatePolicy();
+    scoped_refptr<sandbox::TargetPolicy> targetPolicy = broker_service->CreatePolicy();
 
-    // By defult we'll apply full sandbox.  Your own policy then applied over this.
+    // By default we'll apply full sandbox.  Your own policy is then applied over this.
     targetPolicy->SetJobLevel(sandbox::JOB_LOCKDOWN, 0);
     targetPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS, sandbox::USER_LOCKDOWN);
     targetPolicy->SetAlternateDesktop(true);
@@ -193,8 +194,9 @@ static int RunParent(int argc, wchar_t* argv[],
     }
 
     PROCESS_INFORMATION pi;
-    
-    sandbox::ResultCode result;
+    sandbox::ResultCode warning_result = sandbox::SBOX_ALL_OK;
+    DWORD last_error = ERROR_SUCCESS;
+
     {
         wchar_t *orig_args = GetCommandLineW();
         int arg_max_len = wcslen(orig_args) + 50;
@@ -202,12 +204,10 @@ static int RunParent(int argc, wchar_t* argv[],
         swprintf(args_plus_id, arg_max_len, L"%s %d", orig_args, process_id);
         args_plus_id[arg_max_len - 1] = L'\0';
 
-        result = broker_service->SpawnTarget(argv[0], args_plus_id, targetPolicy, &pi);
-
+        result = broker_service->SpawnTarget(argv[0], args_plus_id, targetPolicy, &warning_result, &last_error, &pi);
         delete[] args_plus_id;
     }
-
-    targetPolicy->Release();
+    
     targetPolicy = NULL;
 
     if (sandbox::SBOX_ALL_OK != result) {
@@ -230,7 +230,9 @@ static int RunParent(int argc, wchar_t* argv[],
                                                 NMPWAIT_USE_DEFAULT_WAIT,
                                                 NULL);
         // Set the security on 
-        if (!sandbox::AddKnownSidToKernelObject(stdout_pipe, WinCreatorOwnerSid, FILE_ALL_ACCESS)) {
+        if (!sandbox::AddKnownSidToObject(stdout_pipe, SE_KERNEL_OBJECT, 
+                                        WinWorldSid, 
+                                        GRANT_ACCESS, FILE_ALL_ACCESS)) {
             fprintf(stderr, "Sandbox: Failed to set security on stdout pipe.\n");
             return 52;
         }
@@ -259,7 +261,9 @@ static int RunParent(int argc, wchar_t* argv[],
                                                 NMPWAIT_USE_DEFAULT_WAIT,
                                                 NULL);
 
-        if (!sandbox::AddKnownSidToKernelObject(stderr_pipe, WinCreatorOwnerSid, FILE_ALL_ACCESS)) {
+        if (!sandbox::AddKnownSidToObject(stderr_pipe, SE_KERNEL_OBJECT, 
+                                        WinCreatorOwnerSid, 
+                                        GRANT_ACCESS, FILE_ALL_ACCESS)) {            
             fprintf(stderr, "Sandbox: Failed to set security on stderr pipe.\n");
             return 52;
         }
@@ -285,30 +289,24 @@ static int RunParent(int argc, wchar_t* argv[],
                                             NMPWAIT_USE_DEFAULT_WAIT,
                                             NULL);
 
-
-    if (!sandbox::AddKnownSidToKernelObject(stdin_pipe, WinCreatorOwnerSid, FILE_ALL_ACCESS)) {
+    if (!sandbox::AddKnownSidToObject(stdin_pipe, SE_KERNEL_OBJECT, 
+                                        WinCreatorOwnerSid, 
+                                        GRANT_ACCESS, FILE_ALL_ACCESS)) {    
         fprintf(stderr, "Sandbox: Failed to set security on stdin pipe.\n");
         return 52;
     }
 
+    // Push STDIN
+    DWORD thread_id;
+    ::CreateThread(NULL,  // Default security attributes
+        NULL,  // Default stack size
+        &ProvideStdIn,
+        stdin_pipe,
+        0,  // No flags
+        &thread_id);
+    
     // All pipes are ready.  We can now resume the sandboxed child's execution.
     ::ResumeThread(pi.hThread);
-
-    // Wait for the child to connect to our STDIN pipe before we start pushing data.
-    BOOL fConnected = ConnectNamedPipe(stdin_pipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
-    if (fConnected) {
-        // Client is connected so we can no push in STDIN
-        DWORD thread_id;
-        ::CreateThread(NULL,  // Default security attributes
-            NULL,  // Default stack size
-            &ProvideStdIn,
-            stdin_pipe,
-            0,  // No flags
-            &thread_id);
-    } else {
-        fprintf(stderr, "Sandbox: Client did not start\n");
-        return 53;
-    }
 
     ::WaitForSingleObject(pi.hProcess, INFINITE);
 
@@ -325,6 +323,7 @@ static int RunParent(int argc, wchar_t* argv[],
     // Wait for BOTH our consuming std(out|err) threads to finish.
     WaitForSingleObject(stdout_thread, 1000);
     WaitForSingleObject(stderr_thread, 1000);
+
     return exit_code;
 }
 
@@ -333,7 +332,7 @@ static int RunParent(int argc, wchar_t* argv[],
  * Fix standard stream as outlined here: http://support.microsoft.com/kb/105305
  */
 static void ReattachStreamToPipe(FILE *stream, DWORD handle, char *mode) {
-    
+
     int hCrt = _open_osfhandle(
              (long) GetStdHandle(handle),
              _O_BINARY
@@ -408,14 +407,13 @@ int RunChild(ConsoleWMainFn pre_sandbox_init,
     ::SetStdHandle(STD_ERROR_HANDLE, stderr_pipe);
 
     // Fix up C runtime output to console as per: http://support.microsoft.com/kb/105305
-    ReattachStreamToPipe(stdin, STD_INPUT_HANDLE, "r");
-    ReattachStreamToPipe(stdout, STD_OUTPUT_HANDLE, "w");
-    ReattachStreamToPipe(stderr, STD_ERROR_HANDLE, "w");
+    ReattachStreamToPipe(stdin, STD_INPUT_HANDLE, (char*)"r");
+    ReattachStreamToPipe(stdout, STD_OUTPUT_HANDLE, (char*)"w");
+    ReattachStreamToPipe(stderr, STD_ERROR_HANDLE, (char*)"w");
 
     // Init Sandbox
 
     sandbox::TargetServices* target_service = sandbox::SandboxFactory::GetTargetServices();
-
     if (NULL == target_service) {
         fprintf(stderr, "Sandbox: Unable to setup sandbox service - GetTargetServices()\n");
         return 55;
@@ -426,7 +424,7 @@ int RunChild(ConsoleWMainFn pre_sandbox_init,
         return 56;
     }
 
-    // The child has an extra arg passed in (to assist with uniq pipe names) - ignore moving forward.
+    // The child has an extra arg passed in (to assist with unique pipe names) - ignore moving forward.
     int argc_less_id = argc - 1;
 
     // If we have pre-sandbox initalization code, run now.
@@ -447,7 +445,7 @@ int RunChild(ConsoleWMainFn pre_sandbox_init,
         return 50;
     }
 
-    // We're now in our standbox. Run our code.
+    // We're now in our sandbox, run our code.
     int exit_code = sandboxed_wmain(argc_less_id, argv);
 
     ::CloseHandle(stdin_pipe);

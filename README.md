@@ -1,5 +1,4 @@
-Ghost Trap - Ghostscript trapped in a sandbox
-======
+# Ghost Trap - Ghostscript trapped in a sandbox
 
 *Ghost Trap* is used to securely convert PostScript and PDF files from untrusted sources into images.
 It's a modified distribution of the [GPL Ghostscript PDL interpreter](http://www.ghostscript.com/) secured and 
@@ -17,7 +16,8 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ## Download
 
-*Windows:* [ghost-trap-installer.exe](http://cdn.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.2.9.10.exe)  (version 1.2)
+*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.3.9.27.exe)  (version 1.3)
+
 
 ## Motivation
 
@@ -47,79 +47,85 @@ supplied with Ghostscript.
 
 To convert the Escher PostScript example into a PNG image *WITHOUT* sandboxing (this is just standard Ghostscript):
 
-    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c.exe" -q -dSAFER -dNOPAUSE -dBATCH ^
+    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gsc.exe" -q -dSAFER -dNOPAUSE -dBATCH ^
                  -sDEVICE=png16m -sOutputFile=escher.png ^
                  "C:\Program Files (x86)\GhostTrap\examples\escher.ps"
 
 
 To convert the same Escher example into a PNG image *WITH* sandboxing using *Ghost Trap*:
 
-    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c-trapped.exe" -q -dNOPAUSE -dBATCH ^
+    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gsc-trapped.exe" -q -dNOPAUSE -dBATCH ^
                  -sDEVICE=png16m -sOutputFile=escher.png ^
                  "C:\Program Files (x86)\GhostTrap\examples\escher.ps"
 
 To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
 
-    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gswin32c-trapped.exe" -q -dNOPAUSE -dBATCH ^
+    C:\Users\me> "C:\Program Files (x86)\GhostTrap\bin\gsc-trapped.exe" -q -dNOPAUSE -dBATCH ^
                  -sDEVICE=jpeg "-sOutputFile=annots page %d.jpg" ^
                  "C:\Program Files (x86)\GhostTrap\examples\annots.pdf"
 
-```gswin32c-trapped.exe``` is the sandboxed version of ``gswin32c.exe``.  It should behave the same
-as the standard Ghostscript console command as [documented](http://ghostscript.com/doc/9.07/Use.htm),
+`gsc-trapped.exe` is the sandboxed version of `gsc.exe`.  It should behave the same
+as the standard Ghostscript console command as [documented](https://ghostscript.com/doc/9.27/Use.htm),
 with the following known exceptions:
 
- * The input and output files must be on a local disk (no network shares).
- * The ```-dSAFER``` mode is always enabled by default.
- * Defining custom/extra FONT or LIB paths on the command line is not allowed.
+ *  The input and output files must be on a local disk (no network shares).
+ *  The `-dSAFER` mode is always enabled by default.
+ *  Defining custom/extra FONT or LIB paths on the command line is not allowed.
 
 
 ## How it works
 
-```gswin32c-trapped.exe``` first determines a whitelist of resources required to perform the conversion.  It then 
+`gsc-trapped.exe` first determines a whitelist of resources required to perform the conversion.  It then 
 execs a child process within a strongly contained sandbox to perform the task. The whitelist of allowed resources 
 is dynamically constructed by determining the input file and output file/directory from the supplied 
 command-line arguments. The Ghostscript interpreter's access rights is restricted and it may only access:
 
- * Read only access to the Windows Fonts directory.
- * Read only access to application-level registry keys (HKLM\Software\GPL Ghostscript).
- * Read only access to Ghostscript's lib folder resources.
- * Read only access to the input file.
- * Write access to the user-level Temp directory.
- * Write access to the output directory (OutputFile).
+ *  Read only access to the Windows Fonts directory.
+ *  Read only access to application-level registry keys (HKLM\Software\GPL Ghostscript).
+ *  Read only access to Ghostscript's lib folder resources.
+ *  Read only access to the input file.
+ *  Write access to the user-level Temp directory.
+ *  Write access to the output directory (OutputFile).
 
 The sandbox also constrains the execution process on an isolated desktop session to prevent 
 [shatter attacks](http://en.wikipedia.org/wiki/Shatter_attack) and limits IPC and other potential
 escape vectors.
 
+
 ## Release History
 
-**2013-10-11**
- * Recompiled against latest version of Ghostscript (9.10)
- * Rolled to version 1.2.9.10
+### [1.3.9.27] - 2019-06-14
+ *  __Breaking change: installer now includes 64-bit binaries only.__
+ *  Updated to Ghostscript 9.27.
+ *  Updated to the latest Chromium Sandbox (as of [2019-04-14](https://chromium.googlesource.com/chromium/src/+/2d57e5b8afc6d01b344a8d95d3470d46b35845c5)).
+ *  The build script now builds 64-bit binaries (only). The architecture is no longer part of the executable names. I.e.
+    `win32` and `win64` are dropped from the names.
+ *  For backwards compatibility (path references to binaries), the installer script copies the 64-bit binaries to their
+    old 32-bit named equivalents. E.g. `gswin32c-trapped.exe` is a copy of `gsc-trapped.exe`.
 
-**2013-03-04**
- * Addressed an issue that would result in Ghost Trap returning the wrong exit code.
- * Rolled to version 1.2
+### [1.2.9.10] - 2013-10-11
+ *  Updated to Ghostscript 9.10.
 
-**2013-03-01**
- * Compiled against Ghostscript 9.07.
- * ```-dSAFER``` is now and enforced default.
- * Updated license to AFFERO GPL.
- * Minor code cleanup to remove some FIXME's.
- * Rolled to version 1.1
+### [1.2.9.07] - 2013-03-04
+ *  Addressed an issue that would result in Ghost Trap returning the wrong exit code.
 
-**2013-01-14** 
- * Initial public release.
+### [1.1.9.07] - 2013-03-01
+ *  Updated to Ghostscript 9.07.
+ *  `-dSAFER` is now an enforced default.
+ *  Updated license to Affero GPL.
+ *  Minor code cleanup to remove some FIXME's.
+
+### [1.0.9.06] - 2013-01-14 
+ *  Initial public release.
 
 
 ## Future
 
 The following future refinements are planned:
 
- * Sandbox other executable in the GhostPDL project (e.g ```pcl6.exe```).
- * Support custom FONT and LIB paths defined on the command line (read only access).
- * Look at sandbox options on Linux.
- * 64bit version when/if the Chromium sandbox supports it.
+ *  Sandbox other executables in the GhostPDL project (e.g `pcl6.exe`).
+ *  Support custom FONT and LIB paths defined on the command line (read only access).
+ *  Look at sandbox options on Linux.
 
 
 ## Authors
@@ -130,30 +136,42 @@ The following future refinements are planned:
 [PaperCut Software](http://www.papercut.com/).
 
 
-## Developers
+### Requirements
 
-To build Ghost Trap from source, here is a brief flow:
+ *  Visual Studio 2019 or 2017
+ *  [Inno Setup 6](http://www.jrsoftware.org/isinfo.php)
 
- 1. Clone this git repo.
 
- 2. Download Google Chromium source into the third-party directory as documented in ```[ghost-trap]/third-party/README.txt```
+## Building
 
- 3. Download GhostPDL source into the third-party directory as documented in ```[ghost-trap]/third-party/README.txt```
+ 1. Check out the [Ghost Trap Source Code](https://github.com/PaperCutSoftware/GhostTrap).
 
- 4. Perform a ```32bit Release``` compile on each dependency (follow the project's documentation). 
-    Note: Building Chromium is very involved! Follow the directions carefully. You will not need to compile whole 
-    Chromium source. Just the "sandbox" sub project will be enough to generate the required dependencies.
+ 2. Follow the [Chromium source checkout and build instructions](https://chromium.googlesource.com/chromium/src/+/master/docs/windows_build_instructions.md).
 
- 5. Install [INNO setup](http://www.jrsoftware.org/isinfo.php).
+     *  When creating the `chromium` directory for source checkout, create it at `GhostTrap/third-party/chromium`.
+     *  Take note of the `--no-history` flag to `fetch`, which will significantly speed up the checkout.
+     *  Ensure that `gn gen out\Default` runs successfully.
+     *  The Visual Studio setup steps are not necessary.
 
- 6. Run ```build.bat```
+ 3. Download the [GhostPDL source](https://www.ghostscript.com/download/gpdldnld.html) to
+    `GhostTrap/third-party/ghostpdl`.
+
+ 4. Compile 64-bit binaries for Ghostscript, GhostPCL and GhostXPS. At the time of writing, this involved:
+
+     *  Opening `ghostpdl/windows/GhostPDL.sln` in Visual Studio to trigger a project structure upgrade.
+     *  Running `msbuild windows/GhostPDL.sln /p:Configuration=Release /p:Platform=x64` from the Developer Command
+        Prompt.
+
+ 5. Run the `GhostTrap/build.bat` build script.
+
+    The installer will be output to `GhostTrap/target/ghost-trap-installer-${version}.exe`.
 
 
 ## License
 
 *Ghost Trap* is open source software licensed under the Affero GPL:
 
-    Copyright (c) 2012-2014 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
+    Copyright (c) 2012-2019 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -167,4 +185,10 @@ To build Ghost Trap from source, here is a brief flow:
 
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-   
+
+
+[1.3.9.27]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.2.9.10...v1.3.9.27
+[1.2.9.10]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.2.9.07...v1.2.9.10
+[1.2.9.07]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.1.9.07...v1.2.9.07
+[1.1.9.07]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.0.9.06...v1.1.9.07
+[1.0.9.06]: https://github.com/PaperCutSoftware/GhostTrap/releases/tag/v1.0.9.06

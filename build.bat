@@ -1,123 +1,166 @@
 @echo off
-
-set GHOST_TRAP_VERSION=1.2
-
-set INNO_COMPILER=%programfiles(x86)%\Inno Setup 5\ISCC.exe
+set GHOST_TRAP_VERSION=1.3
+set INNO_COMPILER=%programfiles(x86)%\Inno Setup 6\ISCC.exe
 SETLOCAL ENABLEDELAYEDEXPANSION
 set starttime=%time%
 set startdir=%cd%
+set gsversion=9.27
+
+echo  .-.      ___ _               _  _____                 
+echo (o o)    / _ \ ^|__   ___  ___^| ^|/__   \_ __ __ _ _ __  
+echo ^| O \   / /_\/ '_ \ / _ \/ __^| __^|/ /\/ '__/ _` ^| '_ \ 
+echo  \   \ / /_\\^| ^| ^| ^| (_) \__ \ ^|_/ /  ^| ^| ^| (_^| ^| ^|_) ^|
+echo   `~~~'\____/^|_^| ^|_^|\___/^|___/\__\/   ^|_^|  \__,_^| .__/ 
+echo                                                 ^|_^|    
+echo.
 
 rem Make the current dir the script dir
 cd %~dp0
 
+if %errorlevel% NEQ 0 goto builderror
 
 REM #
-REM # Verify that our 3rd party dependencies exist and are built.
+REM # Verify that our required dependencies exists
 REM #
 
-if exist third-party\chromium\src\sandbox goto chromesrcok
+if exist "%~dp0third-party\ghostpdl\bin\gsdll64.dll" goto gsinsok
+echo Error: Unable to locate the GhostPDL files
+echo Please ensure its at:
+echo     %~dp0third-party\ghostpdl\bin\gsdll64.dll
+goto builderror
+:gsinsok
+
+if exist %~dp0third-party\chromium\src\sandbox goto chromesrcok
 echo Error: Unable to locate the chromium source.
 echo Please ensure the chromium source is located at:
 echo     %~dp0third-party\chromium\src
 goto builderror
 :chromesrcok
 
-if exist third-party\chromium\src\build\Release\lib\sandbox*.lib goto chromelibok
-echo Error: Unable to locate the chromium sandbox.lib files.
-echo Please ensure the chromium sandbox project has been built.
-echo The sandbox.lib file should exist at:
-echo     %~dp0third-party\chromium\build\Release\lib\sandbox.lib
+if exist %~dp0src goto ghosttrapsrcok
+echo Error: Unable to locate the Ghost Trap project source.
+echo Please ensure the Ghost Trap source is located at:
+echo     %~dp0src
 goto builderror
-:chromelibok
+:ghosttrapsrcok
 
-if exist third-party\ghostpdl\win32 goto ghostpdlsrcok
+if exist %~dp0third-party\ghostpdl\psi\ goto ghostscriptsrcok
 echo Error: Unable to locate the GhostPDL project source.
 echo Please ensure the GhostPDL source is located at:
 echo     %~dp0third-party\ghostpdl
 goto builderror
-:ghostpdlsrcok
-
-if exist third-party\ghostpdl\gs\bin\gswin32c.exe goto ghostpdllibok
-echo Error: Unable to locate Ghostscript binaries.
-echo Please ensure that the GhostPDL solution has been built.
-echo The gswin32c.exe file should exist at:
-echo     %~dp0third-party\ghostpdl\gs\bin\gswin32c.exe
-goto builderror
-:ghostpdllibok
+:ghostscriptsrcok
 
 REM #
 REM # Get Ghostscript version info
 REM #
 
-for /f "usebackq delims=" %%x in (`findstr /B /C:GS_VERSION_M third-party\ghostpdl\gs\base\version.mak`) do (set "%%x") 
+for /f "usebackq delims=" %%x in (`findstr /B /C:GS_VERSION_M %~dp0third-party\ghostpdl\base\version.mak`) do (set "%%x") 
 
 echo Ghostscript version is %GS_VERSION_MAJOR%.%GS_VERSION_MINOR%
+echo.
 
 REM #
 REM # Build Ghost Trap
 REM #
 
-@if "%VSINSTALLDIR%"=="" call "%VS100COMNTOOLS%\vsvars32.bat"
-echo.
+echo ====  Compiling 64-bit  ====
 
-REM Build 32 bit
-echo ====  Compiling 32-bit  ====
-devenv src\ghost-trap.sln /rebuild "release|Win32"
+REM Append extra build info to the BUILD.gn
+>nul find "gsc-trapped" %~dp0third-party\chromium\src\sandbox\win\BUILD.gn && (
+  goto buildinfoexists
+) || (
+  goto buildinfomissing
+)
+
+:buildinfomissing
+echo.>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo executable("gsc-trapped") {>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo   sources = [>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo      "ghosttrap/gstrapped.cpp",>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo      "ghosttrap/sandbox_procmgmt.cpp",>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo      "ghosttrap/sandbox_procmgmt.h",>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo   ]>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo.>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo   include_dirs = [>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo      "ghosttrap/ghostscript/psi",>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo      "ghosttrap/ghostscript/base",>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo   ]>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo.>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo   deps = [>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo     ":sandbox",>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo   ]>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+echo }>>%~dp0third-party\chromium\src\sandbox\win\BUILD.gn
+:buildinfoexists
+
+REM Copy the Ghost Trap source code to the Chromium project
+call mkdir %~dp0third-party\chromium\src\sandbox\win\ghosttrap > NUL
+call xcopy %~dp0src %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ /Y /E /S > NUL
+
+REM Copy the Ghostscript source code to the Chromium project
+call mkdir %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ghostscript > NUL
+call xcopy %~dp0third-party\ghostpdl %~dp0third-party\chromium\src\sandbox\win\ghosttrap\ghostscript\ /Y /E /S > NUL
+
+REM #
+REM # REM Start the build
+REM #
+
+call cd "%~dp0third-party\chromium\src\" > NUL
+if %errorlevel% NEQ 0 goto builderror
+
+call gn gen out\Default --args="is_debug=false" > NUL
+if %errorlevel% NEQ 0 goto builderror
+
+call autoninja -C out\Default sandbox/win:gsc-trapped > NUL
+if %errorlevel% NEQ 0 goto builderror
+
+REM #
+REM # Test Ghost Trap
+REM #
+echo Testing Ghost Trap...
+copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0third-party\chromium\src\out\Default\" /Y > NUL
+call "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
 if %errorlevel% NEQ 0 goto builderror
 
 REM #
 REM # Create target dir mirroring Ghostscript standard install.
 REM #
-
-rmdir /s /q "target" > NUL
+rmdir /s /q "%~dp0target" > NUL
 
 REM # Small sleep so we don't hit locked files.
 ping -n 3 127.0.0.1 > NUL
 
 echo Copying files...
 
-mkdir target > NUL
-mkdir target\installfiles > NUL
-mkdir target\installfiles\bin > NUL
-mkdir target\installfiles\doc > NUL
-mkdir target\installfiles\examples > NUL
-mkdir target\installfiles\lib > NUL
-mkdir target\installfiles\zlib > NUL
-mkdir target\installfiles\zlib\doc > NUL
+mkdir "%~dp0target" > NUL
+mkdir "%~dp0target\installfiles" > NUL
+mkdir "%~dp0target\installfiles\bin" > NUL
 
 REM # Ghost Trap exe, README and LICENSE files
-copy src\Release\gswin32c-trapped.exe target\installfiles\bin /Y > NUL
-
-REM # Chrome sandbox wow helper
-copy third-party\chromium\src\build\Release\wow_helper.exe target\installfiles\bin /Y > NUL
-copy LICENSE* target\installfiles /Y > NUL
-copy README* target\installfiles /Y > NUL
+copy "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" "%~dp0target\installfiles\bin\gsc-trapped.exe" /Y > NUL
+copy "%~dp0LICENSE*" "%~dp0target\installfiles" /Y > NUL
+copy "%~dp0README*" "%~dp0target\installfiles" /Y > NUL
 
 REM # Ghostscript files (mirroring standard install structure)
-copy third-party\ghostpdl\gs\bin\gswin32*.exe target\installfiles\bin /Y > NUL
-copy third-party\ghostpdl\gs\bin\gsdll32*.dll target\installfiles\bin /Y > NUL
-
-copy third-party\ghostpdl\gs\doc\*.* target\installfiles\doc /Y > NUL
-
-copy third-party\ghostpdl\gs\examples\*.* target\installfiles\examples /Y > NUL
-
-copy third-party\ghostpdl\gs\lib\*.* target\installfiles\lib /Y > NUL
-
-copy third-party\ghostpdl\gs\zlib\doc\*.* target\installfiles\zlib\doc /Y > NUL
-
-REM # Also include pcl6.exe (PCL support) and gxps.exe (XPS support) for convenience.
-REM # Note: These do not (yet) have trapped varients.
-
-copy third-party\ghostpdl\main\obj\pcl6.exe target\installfiles\bin /Y > NUL
-copy third-party\ghostpdl\xps\obj\gxps.exe target\installfiles\bin /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gswin64.exe" "%~dp0target\installfiles\bin\gs.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gswin64c.exe" "%~dp0target\installfiles\bin\gsc.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gpcl6win64.exe" "%~dp0target\installfiles\bin\pcl6.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gpcl6dll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gxpswin64.exe" "%~dp0target\installfiles\bin\gxps.exe" /Y > NUL
+copy "%~dp0third-party\ghostpdl\bin\gxpsdll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL
+xcopy "%~dp0third-party\ghostpdl\doc" "%~dp0target\installfiles\doc\" /Y /S > NUL
+xcopy "%~dp0third-party\ghostpdl\examples" "%~dp0target\installfiles\examples\" /Y /S > NUL
+xcopy "%~dp0third-party\ghostpdl\iccprofiles" "%~dp0target\installfiles\iccprofiles\" /Y /S > NUL
+xcopy "%~dp0third-party\ghostpdl\lib" "%~dp0target\installfiles\lib\" /Y /S > NUL
+xcopy "%~dp0third-party\ghostpdl\Resource" "%~dp0target\installfiles\Resource\" /Y /S > NUL
 
 REM #
 REM # Run Inno install script to build the installer
 REM #
 
 echo Building installer...
-
-"%INNO_COMPILER%" "/dapp_version=%GHOST_TRAP_VERSION%" "/dgs_version=%GS_VERSION_MAJOR%.%GS_VERSION_MINOR%" installer\win\ghost-trap.iss /q
+"%INNO_COMPILER%" "/dapp_version=%GHOST_TRAP_VERSION%" "/dgs_version=%GS_VERSION_MAJOR%.%GS_VERSION_MINOR%" "%~dp0installer\win\ghost-trap.iss" /q
 if %errorlevel% NEQ 0 goto builderror
 
 
