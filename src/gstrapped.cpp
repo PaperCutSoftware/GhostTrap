@@ -46,6 +46,9 @@
 #define GHOST_TRAP_VERSION      "1.4.10.00"
 #define GHOST_TRAP_COPYRIGHT    "Copyright (c) 2012-2023 PaperCut Software Pty Ltd"
 
+const wchar_t* PARAM_OUTPUT_FILE = L"OutputFile=";
+const wchar_t* PARAM_FAIL_TEST = L"--fail-test=";
+
 // Definitions
 typedef struct GSDLL_S {
         HINSTANCE hmodule;  /* DLL module handle */
@@ -270,8 +273,8 @@ static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[]) {
         full_path_argv[i] = current_argv;
         // Convert relative paths to absolute if found.
         wchar_t *p;
-        if ((p = wcsstr(argv[i], L"OutputFile=")) != NULL) {
-            p += 11;
+        if ((p = wcsstr(argv[i], PARAM_OUTPUT_FILE)) != NULL) {
+            p += wcslen(PARAM_OUTPUT_FILE);
 
             wchar_t full_path[MAX_PATH];
 
@@ -431,8 +434,8 @@ static void ApplyPolicy(std::unique_ptr<sandbox::TargetPolicy> &policy, int argc
     for (i = 0; i < argc; ++i) {
         wchar_t *p;
 
-        if ((p = wcsstr(nargv[i], L"OutputFile=")) != NULL) {
-            p += 11;
+        if ((p = wcsstr(nargv[i], PARAM_OUTPUT_FILE)) != NULL) {
+            p += wcslen(PARAM_OUTPUT_FILE);
             AllowAccessToFile(policy, p, TRUE);
             has_outfile = TRUE;
         }
@@ -442,8 +445,8 @@ static void ApplyPolicy(std::unique_ptr<sandbox::TargetPolicy> &policy, int argc
         }
 
         // Sandbox Testing - whitelist test data
-        if ((p = wcsstr(nargv[i], L"--fail-test=")) != NULL) {
-            p += 9;
+        if ((p = wcsstr(nargv[i], PARAM_FAIL_TEST)) != NULL) {
+            p += wcslen(PARAM_FAIL_TEST);
 
             /* Setup Test 1 for failure
              * Allow write access to C:\Windows\Temp folder
@@ -477,20 +480,21 @@ static void ApplyPolicy(std::unique_ptr<sandbox::TargetPolicy> &policy, int argc
 
             /* Setup Test 3 for failure
              * Allow read access to registry key HKCU\Environment
+             * 
+             * Note: Registry sandboxing was removed from the Chromium sandbox. Commenting code for prosterity.
              */
-            if(wcscmp(p, L"3") == 0 && test_enabled) {
-                // Registry sandboxing removed from the Chromium sandbox. Commenting code for prosterity.
-                // policy->AddRule(
-                //    sandbox::TargetPolicy::SUBSYS_REGISTRY, 
-                //    sandbox::TargetPolicy::REG_ALLOW_READONLY, 
-                //    L"HKEY_CURRENT_USER\\Environment"
-                //);
-            }
+            // if(wcscmp(p, L"3") == 0 && test_enabled) {
+            //     policy->AddRule(
+            //         sandbox::TargetPolicy::SUBSYS_REGISTRY, 
+            //         sandbox::TargetPolicy::REG_ALLOW_READONLY, 
+            //         L"HKEY_CURRENT_USER\\Environment"
+            //     );
+            // }
         }
     }
 
     // If no OutputFile, add READ/WRITE access to current working directory?
-    if (!has_outfile) {
+    if (!has_outfile && !test_enabled) {
         fprintf(stderr, "Ghost Trap: An OutputFile with an absolute path is required.\n");
     }
 
