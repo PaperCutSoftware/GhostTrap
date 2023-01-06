@@ -430,9 +430,19 @@ static void ApplyPolicy(std::unique_ptr<sandbox::TargetPolicy> &policy, int argc
     // Allow WRITE access to OutputFile target directory
     BOOL has_outfile = FALSE;
     BOOL test_enabled = FALSE;
+    BOOL help_requested = FALSE;
     int i;
     for (i = 0; i < argc; ++i) {
         wchar_t *p;
+
+        if (wcscmp(argv[i], L"-h") == 0) {
+            printf("Ghost Trap: GPL Ghostscript running in the Google Chromium Sandbox.\n");
+            printf("Ghost Trap: Version %s\n", GHOST_TRAP_VERSION);
+            printf("Ghost Trap: %s\n", GHOST_TRAP_COPYRIGHT);
+            printf("\n");
+            help_requested = TRUE;
+            continue;
+        }
 
         if ((p = wcsstr(nargv[i], PARAM_OUTPUT_FILE)) != NULL) {
             p += wcslen(PARAM_OUTPUT_FILE);
@@ -494,7 +504,7 @@ static void ApplyPolicy(std::unique_ptr<sandbox::TargetPolicy> &policy, int argc
     }
 
     // If no OutputFile, add READ/WRITE access to current working directory?
-    if (!has_outfile && !test_enabled) {
+    if (!has_outfile && !test_enabled && !help_requested) {
         fprintf(stderr, "Ghost Trap: An OutputFile with an absolute path is required.\n");
     }
 
@@ -619,13 +629,6 @@ static int TestSandbox() {
 static int SandboxedMain(int argc, wchar_t* argv[]) {
     // If -h, print out Ghost Trap information as well.
     for (int i = 0; i < argc; ++i) {
-        if (wcscmp(argv[i], L"-h") == 0) {
-            printf("Ghost Trap: GPL Ghostscript running in with the Google Chromium Sandbox.\n");
-            printf("Ghost Trap: Version %s\n", GHOST_TRAP_VERSION);
-            printf("Ghost Trap: %s\n", GHOST_TRAP_COPYRIGHT);
-            printf("\n");
-            break;
-        }
         // Used for developer testing only (not documented in usage)
         if (wcscmp(argv[i], L"--test-sandbox") == 0) {
             return TestSandbox();

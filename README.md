@@ -99,6 +99,7 @@ escape vectors.
  * Updated to the latest Chromium Sandbox [as of 2022-12-15](https://chromium.googlesource.com/chromium/src/+/1a554a4863f66c922398e91691212a54a8f11ea0)).
  * Fixed the sandbox tests to no longer report a missing output file.
  * Fixed the sandbox failure tests to run when requested.
+ * Fixed the display of the version help (-h).
 
 ### [1.3.9.27] - 2019-06-14
  *  __Breaking change: installer now includes 64-bit binaries only.__
