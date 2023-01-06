@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 PaperCut Software International Pty. Ltd.
+ * Copyright (c) 2012-2023 PaperCut Software Pty Ltd
  * http://www.papercut.com/
  *
  * Author: Chris Dance <chris.dance@papercut.com>
@@ -58,13 +58,12 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-// Chromium Sandbox Header files
-#include "sandbox/win/src/acl.h"
-#include "sandbox/win/src/sandbox_factory.h"
-
 #include "sandbox_procmgmt.h"
 
-
+// Chromium Sandbox Header files
+#include <sandbox/win/src/acl.h>
+#include <sandbox/win/src/sandbox_factory.h>
+#include <sandbox/win/src/alternate_desktop.h>
 
 const wchar_t *STDOUT_PIPE_NAME = L"\\\\.\\pipe\\sandboxed-app-stdout-%d";
 const wchar_t *STDERR_PIPE_NAME = L"\\\\.\\pipe\\sandboxed-app-stderr-%d";
@@ -169,7 +168,6 @@ static DWORD WINAPI ProvideStdIn(void *param) {
 static int RunParent(int argc, wchar_t* argv[], 
                         sandbox::BrokerServices* broker_service, 
                         SandboxPolicyFn policy_provider) {
-
     DWORD process_id = GetCurrentProcessId();
     sandbox::ResultCode result;
     
@@ -180,13 +178,16 @@ static int RunParent(int argc, wchar_t* argv[],
     }
 
     // Apply our policy
-    scoped_refptr<sandbox::TargetPolicy> targetPolicy = broker_service->CreatePolicy();
+    std::unique_ptr<sandbox::TargetPolicy> targetPolicy = broker_service->CreatePolicy();
+
+    // Create an alternate desktop for the sandbox
+    (void) broker_service->CreateAlternateDesktop(sandbox::Desktop::kAlternateDesktop);
 
     // By default we'll apply full sandbox.  Your own policy is then applied over this.
-    targetPolicy->SetJobLevel(sandbox::JOB_LOCKDOWN, 0);
-    targetPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS, sandbox::USER_LOCKDOWN);
-    targetPolicy->SetAlternateDesktop(true);
-    targetPolicy->SetDelayedIntegrityLevel(sandbox::INTEGRITY_LEVEL_LOW);
+    (void) targetPolicy->GetConfig()->SetJobLevel(sandbox::JobLevel::kLockdown, 0);
+    (void) targetPolicy->GetConfig()->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS, sandbox::USER_LOCKDOWN);
+    targetPolicy->GetConfig()->SetDesktop(sandbox::Desktop::kAlternateDesktop);
+    targetPolicy->GetConfig()->SetDelayedIntegrityLevel(sandbox::INTEGRITY_LEVEL_LOW);
 
     // Apply any additional policy (e.g. a whitelist of files/registry/other) as provided.
     if (policy_provider) {
@@ -204,7 +205,7 @@ static int RunParent(int argc, wchar_t* argv[],
         swprintf(args_plus_id, arg_max_len, L"%s %d", orig_args, process_id);
         args_plus_id[arg_max_len - 1] = L'\0';
 
-        result = broker_service->SpawnTarget(argv[0], args_plus_id, targetPolicy, &warning_result, &last_error, &pi);
+        result = broker_service->SpawnTarget(argv[0], args_plus_id, std::move(targetPolicy), &warning_result, &last_error, &pi);
         delete[] args_plus_id;
     }
     
@@ -230,9 +231,8 @@ static int RunParent(int argc, wchar_t* argv[],
                                                 NMPWAIT_USE_DEFAULT_WAIT,
                                                 NULL);
         // Set the security on 
-        if (!sandbox::AddKnownSidToObject(stdout_pipe, SE_KERNEL_OBJECT, 
-                                        WinWorldSid, 
-                                        GRANT_ACCESS, FILE_ALL_ACCESS)) {
+        if (!sandbox::AddKnownSidToObject(stdout_pipe, sandbox::SecurityObjectType::kKernel,
+                base::win::WellKnownSid::kWorld, sandbox::SecurityAccessMode::kGrant, FILE_ALL_ACCESS)) {
             fprintf(stderr, "Sandbox: Failed to set security on stdout pipe.\n");
             return 52;
         }
@@ -261,9 +261,8 @@ static int RunParent(int argc, wchar_t* argv[],
                                                 NMPWAIT_USE_DEFAULT_WAIT,
                                                 NULL);
 
-        if (!sandbox::AddKnownSidToObject(stderr_pipe, SE_KERNEL_OBJECT, 
-                                        WinCreatorOwnerSid, 
-                                        GRANT_ACCESS, FILE_ALL_ACCESS)) {            
+        if (!sandbox::AddKnownSidToObject(stderr_pipe, sandbox::SecurityObjectType::kKernel,
+                base::win::WellKnownSid::kCreatorOwner, sandbox::SecurityAccessMode::kGrant, FILE_ALL_ACCESS)) {
             fprintf(stderr, "Sandbox: Failed to set security on stderr pipe.\n");
             return 52;
         }
@@ -289,9 +288,8 @@ static int RunParent(int argc, wchar_t* argv[],
                                             NMPWAIT_USE_DEFAULT_WAIT,
                                             NULL);
 
-    if (!sandbox::AddKnownSidToObject(stdin_pipe, SE_KERNEL_OBJECT, 
-                                        WinCreatorOwnerSid, 
-                                        GRANT_ACCESS, FILE_ALL_ACCESS)) {    
+    if (!sandbox::AddKnownSidToObject(stdin_pipe, sandbox::SecurityObjectType::kKernel,
+            base::win::WellKnownSid::kCreatorOwner, sandbox::SecurityAccessMode::kGrant, FILE_ALL_ACCESS)) {
         fprintf(stderr, "Sandbox: Failed to set security on stdin pipe.\n");
         return 52;
     }
@@ -307,7 +305,6 @@ static int RunParent(int argc, wchar_t* argv[],
     
     // All pipes are ready.  We can now resume the sandboxed child's execution.
     ::ResumeThread(pi.hThread);
-
     ::WaitForSingleObject(pi.hProcess, INFINITE);
 
     DWORD exit_code = 0;
@@ -334,7 +331,7 @@ static int RunParent(int argc, wchar_t* argv[],
 static void ReattachStreamToPipe(FILE *stream, DWORD handle, char *mode) {
 
     int hCrt = _open_osfhandle(
-             (long) GetStdHandle(handle),
+             (intptr_t) GetStdHandle(handle),
              _O_BINARY
           );
     FILE *fpipe = _fdopen(hCrt, mode);
@@ -464,7 +461,6 @@ int RunConsoleAppInSandbox(SandboxPolicyFn policy_provider,
                             ConsoleWMainFn pre_sandbox_init, 
                             ConsoleWMainFn sandboxed_wmain, 
                             int argc, wchar_t* argv[]) {
-
     sandbox::BrokerServices* broker_service = sandbox::SandboxFactory::GetBrokerServices();
 
     // A non-NULL broker_service means that we are the unsandboxed parent process.

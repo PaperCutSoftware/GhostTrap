@@ -1,10 +1,10 @@
 @echo off
-set GHOST_TRAP_VERSION=1.3
+set GHOST_TRAP_VERSION=1.4
 set INNO_COMPILER=%programfiles(x86)%\Inno Setup 6\ISCC.exe
 SETLOCAL ENABLEDELAYEDEXPANSION
 set starttime=%time%
 set startdir=%cd%
-set gsversion=9.27
+set gsversion=10.00
 
 echo  .-.      ___ _               _  _____                 
 echo (o o)    / _ \ ^|__   ___  ___^| ^|/__   \_ __ __ _ _ __  
