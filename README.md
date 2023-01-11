@@ -169,7 +169,7 @@ The following future refinements are planned:
      *  Running `msbuild windows/GhostPDL.sln /p:Configuration=Release /p:Platform=x64` from the Developer Command
         Prompt.
 
- 5. Run the `GhostTrap/build.bat` build script.
+ 5. Run the `GhostTrap/build.bat` build script from the Developer Command Prompt.
 
     The installer will be output to `GhostTrap/target/ghost-trap-installer-${version}.exe`.
 
