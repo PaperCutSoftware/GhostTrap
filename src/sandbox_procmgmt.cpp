@@ -179,6 +179,10 @@ static int RunParent(int argc, wchar_t* argv[],
 
     // Apply our policy
     std::unique_ptr<sandbox::TargetPolicy> targetPolicy = broker_service->CreatePolicy();
+    if (NULL == targetPolicy) {
+        fprintf(stderr, "Sandbox: Failed to initialize the sandbox - TargetPolicy object\n");
+        return 51;
+    }
 
     // Create an alternate desktop for the sandbox
     (void) broker_service->CreateAlternateDesktop(sandbox::Desktop::kAlternateDesktop);
@@ -191,7 +195,7 @@ static int RunParent(int argc, wchar_t* argv[],
 
     // Apply any additional policy (e.g. a whitelist of files/registry/other) as provided.
     if (policy_provider) {
-        policy_provider(targetPolicy, argc, argv);
+        policy_provider(*targetPolicy, argc, argv);
     }
 
     PROCESS_INFORMATION pi;
@@ -209,8 +213,6 @@ static int RunParent(int argc, wchar_t* argv[],
         delete[] args_plus_id;
     }
     
-    targetPolicy = NULL;
-
     if (sandbox::SBOX_ALL_OK != result) {
         fprintf(stderr, "Sandbox: Failed to launch with the following result: %d\n", result);
         return 51;

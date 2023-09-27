@@ -63,7 +63,7 @@
 
 #include <sandbox/win/src/sandbox.h>
 
-typedef void (*SandboxPolicyFn)(std::unique_ptr<sandbox::TargetPolicy> &policy, int argc, wchar_t* argv[]);
+typedef void (*SandboxPolicyFn)(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]);
 typedef int (*ConsoleWMainFn)(int argc, wchar_t* argv[]);
 
 int RunConsoleAppInSandbox(SandboxPolicyFn policy_provider, 
