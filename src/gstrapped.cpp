@@ -420,7 +420,7 @@ static void ApplyPolicy(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]
         GetWindowsDirectory(win_dir, MAX_PATH - 1);
         wchar_t dir_rule[MAX_PATH];
         _snwprintf(dir_rule, MAX_PATH - 1, L"%s\\Fonts\\*", win_dir);
-        (void) policy->GetConfig()->AddRule(
+        (void) policy.GetConfig()->AddRule(
             sandbox::SubSystem::kFiles,
             sandbox::Semantics::kFilesAllowReadonly,
             dir_rule
