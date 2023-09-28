@@ -16,7 +16,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ## Download
 
-*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.3.9.27.exe)  (version 1.3)
+*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.4.10.00.exe)  (version 1.4)
 
 
 ## Motivation
@@ -65,7 +65,7 @@ To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
                  "C:\Program Files (x86)\GhostTrap\examples\annots.pdf"
 
 `gsc-trapped.exe` is the sandboxed version of `gsc.exe`.  It should behave the same
-as the standard Ghostscript console command as [documented](https://ghostscript.com/doc/9.27/Use.htm),
+as the standard Ghostscript console command as [documented](https://ghostscript.readthedocs.io/en/gs10.0.0/Use.html),
 with the following known exceptions:
 
  *  The input and output files must be on a local disk (no network shares).
@@ -93,6 +93,13 @@ escape vectors.
 
 
 ## Release History
+
+### [1.4.10.00] - 2023-01-06
+ * Updated to Ghostscript 10.00.0.20220921.
+ * Updated to the latest Chromium Sandbox [as of 2022-12-15](https://chromium.googlesource.com/chromium/src/+/1a554a4863f66c922398e91691212a54a8f11ea0)).
+ * Fixed the sandbox tests to no longer report a missing output file.
+ * Fixed the sandbox failure tests to run when requested.
+ * Fixed the display of the version help (-h).
 
 ### [1.3.9.27] - 2019-06-14
  *  __Breaking change: installer now includes 64-bit binaries only.__
@@ -162,7 +169,7 @@ The following future refinements are planned:
      *  Running `msbuild windows/GhostPDL.sln /p:Configuration=Release /p:Platform=x64` from the Developer Command
         Prompt.
 
- 5. Run the `GhostTrap/build.bat` build script.
+ 5. Run the `GhostTrap/build.bat` build script from the Developer Command Prompt.
 
     The installer will be output to `GhostTrap/target/ghost-trap-installer-${version}.exe`.
 
@@ -171,7 +178,7 @@ The following future refinements are planned:
 
 *Ghost Trap* is open source software licensed under the Affero GPL:
 
-    Copyright (c) 2012-2019 PaperCut Software Int. Pty. Ltd. http://www.papercut.com/
+    Copyright (c) 2012-2023 PaperCut Software Pty Ltd http://www.papercut.com/
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -187,6 +194,7 @@ The following future refinements are planned:
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+[1.4.10.00]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.3.9.27...v1.4.10.00
 [1.3.9.27]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.2.9.10...v1.3.9.27
 [1.2.9.10]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.2.9.07...v1.2.9.10
 [1.2.9.07]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.1.9.07...v1.2.9.07

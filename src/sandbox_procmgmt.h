@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 PaperCut Software International Pty. Ltd.
+ * Copyright (c) 2012-2023 PaperCut Software Pty Ltd
  * http://www.papercut.com/
  *
  * Author: Chris Dance <chris.dance@papercut.com>
@@ -63,7 +63,7 @@
 
 #include <sandbox/win/src/sandbox.h>
 
-typedef void (*SandboxPolicyFn)(scoped_refptr<sandbox::TargetPolicy> policy, int argc, wchar_t* argv[]);
+typedef void (*SandboxPolicyFn)(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]);
 typedef int (*ConsoleWMainFn)(int argc, wchar_t* argv[]);
 
 int RunConsoleAppInSandbox(SandboxPolicyFn policy_provider, 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 PaperCut Software International Pty. Ltd.
+ * Copyright (c) 2012-2023 PaperCut Software Pty Ltd
  * http://www.papercut.com/
  *
  * Author: Chris Dance <chris.dance@papercut.com>
@@ -43,8 +43,11 @@
  * Ghost Trap version number starts at 1 and suffixes the Ghostscript version we've
  * tested/written against.
  */
-#define GHOST_TRAP_VERSION      "1.3.9.27"
-#define GHOST_TRAP_COPYRIGHT    "Copyright (c) 2012-2019 PaperCut Software International Pty. Ltd."
+#define GHOST_TRAP_VERSION      "1.4.10.00"
+#define GHOST_TRAP_COPYRIGHT    "Copyright (c) 2012-2023 PaperCut Software Pty Ltd"
+
+const wchar_t* PARAM_OUTPUT_FILE = L"OutputFile=";
+const wchar_t* PARAM_FAIL_TEST = L"--fail-test=";
 
 // Definitions
 typedef struct GSDLL_S {
@@ -190,7 +193,7 @@ static LONG GetStringRegKey(HKEY hKey, const std::wstring &strValueName, std::ws
  * parent directory (all files) is allowed.  Passing a relative file path will raise an error
  * and no white listing will occure.
  */
-static void AllowAccessToFile(scoped_refptr<sandbox::TargetPolicy> policy, wchar_t *file, BOOL parent_dir) {
+static void AllowAccessToFile(sandbox::TargetPolicy &policy, wchar_t *file, BOOL parent_dir) {
 
     wchar_t drive[8];
     wchar_t dir[512];
@@ -233,11 +236,11 @@ static void AllowAccessToFile(scoped_refptr<sandbox::TargetPolicy> policy, wchar
                                 ext);
         }
 
-        policy->AddRule(
-            sandbox::TargetPolicy::SUBSYS_FILES, 
-            sandbox::TargetPolicy::FILES_ALLOW_ANY, 
+        (void) policy.GetConfig()->AddRule(
+            sandbox::SubSystem::kFiles,
+            sandbox::Semantics::kFilesAllowAny,
             path_rule
-            );
+        );
     }
 }
 
@@ -270,8 +273,8 @@ static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[]) {
         full_path_argv[i] = current_argv;
         // Convert relative paths to absolute if found.
         wchar_t *p;
-        if ((p = wcsstr(argv[i], L"OutputFile=")) != NULL) {
-            p += 11;
+        if ((p = wcsstr(argv[i], PARAM_OUTPUT_FILE)) != NULL) {
+            p += wcslen(PARAM_OUTPUT_FILE);
 
             wchar_t full_path[MAX_PATH];
 
@@ -303,19 +306,19 @@ static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[]) {
 
 
 /*
- * This function is passed into RunConsoleAppInSandbox an is called to apply the sandbox's
+ * This function is passed into RunConsoleAppInSandbox and is called to apply the sandbox's
  * access policies.  
  * 
  * IMPORTANT: This code does not run in the sandbox (runs in the parent process). Take care!
  */
-static void ApplyPolicy(scoped_refptr<sandbox::TargetPolicy> policy, int argc, wchar_t* argv[]) {
+static void ApplyPolicy(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]) {
     // Fix up and expand paths in the args
     wchar_t **nargv = ExpandPathsInArgs(argc, argv);
 
     /*
      * These items need to be white listed:
      *   - READ access on the directories on GS_LIB.
-     *   - READ access to Ghostscript spacific registry keys.
+     *   - READ access to Ghostscript specific registry keys.
      *   - FULL (write) access to target file output directory.
      *   - FULL (write) access to the user's temp directory.
      *   - READ access to the Windows Font directory.
@@ -334,28 +337,31 @@ static void ApplyPolicy(scoped_refptr<sandbox::TargetPolicy> policy, int argc, w
         return;
     }
 
-    policy->AddRule(
-        sandbox::TargetPolicy::SUBSYS_REGISTRY,
-        sandbox::TargetPolicy::REG_ALLOW_READONLY, 
-        L"HKEY_CURRENT_USER"
-        );
+    // *******************************************************************************************************
+    // Registry sandboxing has been removed from the Chromium sandbox. Commenting out the code for prosterity.
+    // policy.AddRule(
+    //    sandbox::TargetPolicy::SUBSYS_REGISTRY,
+    //    sandbox::TargetPolicy::REG_ALLOW_READONLY, 
+    //    L"HKEY_CURRENT_USER"
+    //    );
 
     // Allow READ access to OS keys (e.g. Locale lookup) 
-    policy->AddRule(
-        sandbox::TargetPolicy::SUBSYS_REGISTRY, 
-        sandbox::TargetPolicy::REG_ALLOW_READONLY, 
-        L"HKEY_LOCAL_MACHINE\\System\\CurrentControlSet"
-        );
+    // policy.AddRule(
+    //    sandbox::TargetPolicy::SUBSYS_REGISTRY, 
+    //    sandbox::TargetPolicy::REG_ALLOW_READONLY, 
+    //    L"HKEY_LOCAL_MACHINE\\System\\CurrentControlSet"
+    //    );
 
-    std::wstringstream  white_list_path;
-    white_list_path <<  L"HKEY_LOCAL_MACHINE\\SOFTWARE\\" << rv.product << L"\\*";
+    // std::wstringstream  white_list_path;
+    // white_list_path <<  L"HKEY_LOCAL_MACHINE\\SOFTWARE\\" << rv.product << L"\\*";
 
     // Allow READ access to Ghostscript spacific registry keys.
-    policy->AddRule(
-        sandbox::TargetPolicy::SUBSYS_REGISTRY, 
-        sandbox::TargetPolicy::REG_ALLOW_READONLY, 
-        white_list_path.str().c_str()
-        );
+    // policy.AddRule(
+    //    sandbox::TargetPolicy::SUBSYS_REGISTRY, 
+    //    sandbox::TargetPolicy::REG_ALLOW_READONLY, 
+    //    white_list_path.str().c_str()
+    //    );
+    // *******************************************************************************************************
 
     // Read GS_LIB and whitelist path - as per dwdll.c
     wchar_t gs_key[256];
@@ -376,19 +382,19 @@ static void ApplyPolicy(scoped_refptr<sandbox::TargetPolicy> policy, int argc, w
         std::wstring gs_lib_path;
         GetStringRegKey(hKey, L"GS_LIB", gs_lib_path, L"");
 
-        wchar_t* part = wcstok(&gs_lib_path[0], L";");
+        wchar_t* part = wcstok(&gs_lib_path[0], L";", 0);
         while(part != NULL) {
             wchar_t lib_path[MAX_PATH];
             _snwprintf(lib_path, MAX_PATH, L"%s\\*", part);
 
             // Whitelist the LIB dir.
-            policy->AddRule(
-                sandbox::TargetPolicy::SUBSYS_FILES, 
-                sandbox::TargetPolicy::FILES_ALLOW_READONLY, 
+            (void) policy.GetConfig()->AddRule(
+                sandbox::SubSystem::kFiles,
+                sandbox::Semantics::kFilesAllowReadonly,
                 lib_path
-                );
+            );
 
-            part = wcstok(NULL, L";");
+            part = wcstok(NULL, L";", 0);
         }
 
         RegCloseKey(hKey);
@@ -400,11 +406,11 @@ static void ApplyPolicy(scoped_refptr<sandbox::TargetPolicy> policy, int argc, w
         GetTempPath(MAX_PATH - 1, temp_dir);
         wchar_t dir_rule[MAX_PATH];
         _snwprintf(dir_rule, MAX_PATH - 1, L"%s*", temp_dir);
-        policy->AddRule(
-            sandbox::TargetPolicy::SUBSYS_FILES, 
-            sandbox::TargetPolicy::FILES_ALLOW_ANY, 
+        (void) policy.GetConfig()->AddRule(
+            sandbox::SubSystem::kFiles,
+            sandbox::Semantics::kFilesAllowAny,
             dir_rule
-            );
+        );
     }
 
 
@@ -414,22 +420,32 @@ static void ApplyPolicy(scoped_refptr<sandbox::TargetPolicy> policy, int argc, w
         GetWindowsDirectory(win_dir, MAX_PATH - 1);
         wchar_t dir_rule[MAX_PATH];
         _snwprintf(dir_rule, MAX_PATH - 1, L"%s\\Fonts\\*", win_dir);
-        policy->AddRule(
-            sandbox::TargetPolicy::SUBSYS_FILES, 
-            sandbox::TargetPolicy::FILES_ALLOW_READONLY, 
+        (void) policy.GetConfig()->AddRule(
+            sandbox::SubSystem::kFiles,
+            sandbox::Semantics::kFilesAllowReadonly,
             dir_rule
-            );
+        );
     }
 
     // Allow WRITE access to OutputFile target directory
     BOOL has_outfile = FALSE;
     BOOL test_enabled = FALSE;
+    BOOL help_requested = FALSE;
     int i;
     for (i = 0; i < argc; ++i) {
         wchar_t *p;
 
-        if ((p = wcsstr(nargv[i], L"OutputFile=")) != NULL) {
-            p += 11;
+        if (wcscmp(argv[i], L"-h") == 0) {
+            printf("Ghost Trap: GPL Ghostscript running in the Google Chromium Sandbox.\n");
+            printf("Ghost Trap: Version %s\n", GHOST_TRAP_VERSION);
+            printf("Ghost Trap: %s\n", GHOST_TRAP_COPYRIGHT);
+            printf("\n");
+            help_requested = TRUE;
+            continue;
+        }
+
+        if ((p = wcsstr(nargv[i], PARAM_OUTPUT_FILE)) != NULL) {
+            p += wcslen(PARAM_OUTPUT_FILE);
             AllowAccessToFile(policy, p, TRUE);
             has_outfile = TRUE;
         }
@@ -439,8 +455,8 @@ static void ApplyPolicy(scoped_refptr<sandbox::TargetPolicy> policy, int argc, w
         }
 
         // Sandbox Testing - whitelist test data
-        if ((p = wcsstr(nargv[i], L"--fail-test=")) != NULL) {
-            p += 9;
+        if ((p = wcsstr(nargv[i], PARAM_FAIL_TEST)) != NULL) {
+            p += wcslen(PARAM_FAIL_TEST);
 
             /* Setup Test 1 for failure
              * Allow write access to C:\Windows\Temp folder
@@ -450,9 +466,9 @@ static void ApplyPolicy(scoped_refptr<sandbox::TargetPolicy> policy, int argc, w
                 GetWindowsDirectory(win_dir, MAX_PATH - 1);
                 wchar_t dir_rule[MAX_PATH];
                 _snwprintf(dir_rule, MAX_PATH - 1, L"%s\\Temp\\*", win_dir);
-                policy->AddRule(
-                    sandbox::TargetPolicy::SUBSYS_FILES, 
-                    sandbox::TargetPolicy::FILES_ALLOW_ANY, 
+                (void) policy.GetConfig()->AddRule(
+                    sandbox::SubSystem::kFiles,
+                    sandbox::Semantics::kFilesAllowAny,
                     dir_rule
                 );
             }
@@ -465,29 +481,30 @@ static void ApplyPolicy(scoped_refptr<sandbox::TargetPolicy> policy, int argc, w
                 GetWindowsDirectory(win_dir, MAX_PATH - 1);
                 wchar_t dir_rule[MAX_PATH];
                 _snwprintf(dir_rule, MAX_PATH - 1, L"%s\\notepad.exe", win_dir);
-                policy->AddRule(
-                    sandbox::TargetPolicy::SUBSYS_FILES, 
-                    sandbox::TargetPolicy::FILES_ALLOW_READONLY, 
+                (void) policy.GetConfig()->AddRule(
+                    sandbox::SubSystem::kFiles,
+                    sandbox::Semantics::kFilesAllowReadonly,
                     dir_rule
                 );
             }
 
             /* Setup Test 3 for failure
              * Allow read access to registry key HKCU\Environment
+             * 
+             * Note: Registry sandboxing was removed from the Chromium sandbox. Commenting code for prosterity.
              */
-            if(wcscmp(p, L"3") == 0 && test_enabled) {
-                // 
-                policy->AddRule(
-                    sandbox::TargetPolicy::SUBSYS_REGISTRY, 
-                    sandbox::TargetPolicy::REG_ALLOW_READONLY, 
-                    L"HKEY_CURRENT_USER\\Environment"
-                );
-            }
+            // if(wcscmp(p, L"3") == 0 && test_enabled) {
+            //     policy.AddRule(
+            //         sandbox::TargetPolicy::SUBSYS_REGISTRY, 
+            //         sandbox::TargetPolicy::REG_ALLOW_READONLY, 
+            //         L"HKEY_CURRENT_USER\\Environment"
+            //     );
+            // }
         }
     }
 
     // If no OutputFile, add READ/WRITE access to current working directory?
-    if (!has_outfile) {
+    if (!has_outfile && !test_enabled && !help_requested) {
         fprintf(stderr, "Ghost Trap: An OutputFile with an absolute path is required.\n");
     }
 
@@ -612,13 +629,6 @@ static int TestSandbox() {
 static int SandboxedMain(int argc, wchar_t* argv[]) {
     // If -h, print out Ghost Trap information as well.
     for (int i = 0; i < argc; ++i) {
-        if (wcscmp(argv[i], L"-h") == 0) {
-            printf("Ghost Trap: GPL Ghostscript running in with the Google Chromium Sandbox.\n");
-            printf("Ghost Trap: Version %s\n", GHOST_TRAP_VERSION);
-            printf("Ghost Trap: %s\n", GHOST_TRAP_COPYRIGHT);
-            printf("\n");
-            break;
-        }
         // Used for developer testing only (not documented in usage)
         if (wcscmp(argv[i], L"--test-sandbox") == 0) {
             return TestSandbox();
@@ -698,4 +708,4 @@ error:
  */
 int wmain(int argc, wchar_t* argv[]) {
     return RunConsoleAppInSandbox(ApplyPolicy, PreSandboxedInit, SandboxedMain, argc, argv);
-}   
+}
