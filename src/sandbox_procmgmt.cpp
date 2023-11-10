@@ -166,8 +166,8 @@ static DWORD WINAPI ProvideStdIn(void *param) {
  * This method copies the original wrappers' behaviour with optimization for common parameters.
 */
 bool GrantAccessToObject(HANDLE object, base::win::WellKnownSid known_sid) {
-    absl::optional<base::win::SecurityDescriptor> sd =
-        base::win::SecurityDescriptor::FromHandle(object, base::win::SecurityObjectType::kKernel, DACL_SECURITY_INFORMATION);
+    absl::optional<base::win::SecurityDescriptor> sd = base::win::SecurityDescriptor::FromHandle(
+            object, base::win::SecurityObjectType::kKernel, DACL_SECURITY_INFORMATION);
     if (!sd) {
         return false;
     }
@@ -252,8 +252,8 @@ static int RunParent(int argc, wchar_t* argv[],
                                                 NULL);
         // Set the security on 
         if (!GrantAccessToObject(stdout_pipe, base::win::WellKnownSid::kWorld)) {
-           fprintf(stderr, "Sandbox: Failed to set security on stdout pipe.\n");
-           return 52;
+            fprintf(stderr, "Sandbox: Failed to set security on stdout pipe.\n");
+            return 52;
         }
 
         DWORD thread_id;
