@@ -16,7 +16,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ## Download
 
-*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.4.10.00.exe)  (version 1.4)
+*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.4.10.02.1.exe)  (version 1.4)
 
 
 ## Motivation
@@ -65,7 +65,7 @@ To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
                  "C:\Program Files (x86)\GhostTrap\examples\annots.pdf"
 
 `gsc-trapped.exe` is the sandboxed version of `gsc.exe`.  It should behave the same
-as the standard Ghostscript console command as [documented](https://ghostscript.readthedocs.io/en/gs10.0.0/Use.html),
+as the standard Ghostscript console command as [documented](https://ghostscript.readthedocs.io/en/gs10.02.1/Use.html),
 with the following known exceptions:
 
  *  The input and output files must be on a local disk (no network shares).
@@ -94,7 +94,11 @@ escape vectors.
 
 ## Release History
 
-### [1.4.10.00] - 2023-01-06
+### [1.4.10.02.1] - 2023-11-10
+ * Updated to Ghostscript 10.02.1.20231101.
+ * Updated to the latest Chromium Sandbox [as of 2023-11-03](https://chromium.googlesource.com/chromium/src/+/b2d264b1585bd0d583a49dd91866e7d0ea02d387)).
+ 
+### [1.4.10.00] - 2023-01-06 (internal)
  * Updated to Ghostscript 10.00.0.20220921.
  * Updated to the latest Chromium Sandbox [as of 2022-12-15](https://chromium.googlesource.com/chromium/src/+/1a554a4863f66c922398e91691212a54a8f11ea0)).
  * Fixed the sandbox tests to no longer report a missing output file.
@@ -194,6 +198,7 @@ The following future refinements are planned:
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+[1.4.10.02.1]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.4.10.00...v1.4.10.02.1
 [1.4.10.00]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.3.9.27...v1.4.10.00
 [1.3.9.27]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.2.9.10...v1.3.9.27
 [1.2.9.10]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.2.9.07...v1.2.9.10

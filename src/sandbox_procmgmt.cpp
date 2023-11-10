@@ -159,6 +159,25 @@ static DWORD WINAPI ProvideStdIn(void *param) {
     return 0;
 }
 
+/*
+ * The functionality to add a known SID to an object in the Chromium sandbox was removed in the following commit:
+ * https://chromium.googlesource.com/chromium/src/+/9ad0f7e70e53156c6331d3a7819343b5b7e1e487
+ * Fortunately, the underlying wrapper code to perform all the necessary operations was included in the removal.
+ * This method copies the original wrappers' behaviour with optimization for common parameters.
+*/
+bool GrantAccessToObject(HANDLE object, base::win::WellKnownSid known_sid) {
+    absl::optional<base::win::SecurityDescriptor> sd =
+        base::win::SecurityDescriptor::FromHandle(object, base::win::SecurityObjectType::kKernel, DACL_SECURITY_INFORMATION);
+    if (!sd) {
+        return false;
+    }
+
+    if (!sd->SetDaclEntry(base::win::Sid(known_sid), base::win::SecurityAccessMode::kGrant, FILE_ALL_ACCESS, 0)) {
+        return false;
+    }
+
+    return sd->WriteToHandle(object, base::win::SecurityObjectType::kKernel, DACL_SECURITY_INFORMATION);
+}
 
 /*
  * The parent (unsandboxed process).  This function intializes the sandbox service broker,
@@ -199,7 +218,6 @@ static int RunParent(int argc, wchar_t* argv[],
     }
 
     PROCESS_INFORMATION pi;
-    sandbox::ResultCode warning_result = sandbox::SBOX_ALL_OK;
     DWORD last_error = ERROR_SUCCESS;
 
     {
@@ -209,7 +227,7 @@ static int RunParent(int argc, wchar_t* argv[],
         swprintf(args_plus_id, arg_max_len, L"%s %d", orig_args, process_id);
         args_plus_id[arg_max_len - 1] = L'\0';
 
-        result = broker_service->SpawnTarget(argv[0], args_plus_id, std::move(targetPolicy), &warning_result, &last_error, &pi);
+        result = broker_service->SpawnTarget(argv[0], args_plus_id, std::move(targetPolicy), &last_error, &pi);
         delete[] args_plus_id;
     }
     
@@ -233,10 +251,9 @@ static int RunParent(int argc, wchar_t* argv[],
                                                 NMPWAIT_USE_DEFAULT_WAIT,
                                                 NULL);
         // Set the security on 
-        if (!sandbox::AddKnownSidToObject(stdout_pipe, sandbox::SecurityObjectType::kKernel,
-                base::win::WellKnownSid::kWorld, sandbox::SecurityAccessMode::kGrant, FILE_ALL_ACCESS)) {
-            fprintf(stderr, "Sandbox: Failed to set security on stdout pipe.\n");
-            return 52;
+        if (!GrantAccessToObject(stdout_pipe, base::win::WellKnownSid::kWorld)) {
+           fprintf(stderr, "Sandbox: Failed to set security on stdout pipe.\n");
+           return 52;
         }
 
         DWORD thread_id;
@@ -263,8 +280,7 @@ static int RunParent(int argc, wchar_t* argv[],
                                                 NMPWAIT_USE_DEFAULT_WAIT,
                                                 NULL);
 
-        if (!sandbox::AddKnownSidToObject(stderr_pipe, sandbox::SecurityObjectType::kKernel,
-                base::win::WellKnownSid::kCreatorOwner, sandbox::SecurityAccessMode::kGrant, FILE_ALL_ACCESS)) {
+        if (!GrantAccessToObject(stderr_pipe, base::win::WellKnownSid::kCreatorOwner)) {
             fprintf(stderr, "Sandbox: Failed to set security on stderr pipe.\n");
             return 52;
         }
@@ -290,8 +306,7 @@ static int RunParent(int argc, wchar_t* argv[],
                                             NMPWAIT_USE_DEFAULT_WAIT,
                                             NULL);
 
-    if (!sandbox::AddKnownSidToObject(stdin_pipe, sandbox::SecurityObjectType::kKernel,
-            base::win::WellKnownSid::kCreatorOwner, sandbox::SecurityAccessMode::kGrant, FILE_ALL_ACCESS)) {
+    if (!GrantAccessToObject(stdin_pipe, base::win::WellKnownSid::kCreatorOwner)) {
         fprintf(stderr, "Sandbox: Failed to set security on stdin pipe.\n");
         return 52;
     }
@@ -317,7 +332,9 @@ static int RunParent(int argc, wchar_t* argv[],
     ::CloseHandle(pi.hThread);
     ::CloseHandle(pi.hProcess);
 
-    broker_service->WaitForAllTargets();
+    // According to the following commit where WaitForAllTargets was removed, it appears it was only leveraged in tests.
+    // https://chromium.googlesource.com/chromium/src/+/0287f0eef35bef9e62917ec94640e9a5f01ce920%5E%21/#F2
+    // broker_service->WaitForAllTargets();
 
     // Wait for BOTH our consuming std(out|err) threads to finish.
     WaitForSingleObject(stdout_thread, 1000);

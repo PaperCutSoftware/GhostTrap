@@ -43,7 +43,7 @@
  * Ghost Trap version number starts at 1 and suffixes the Ghostscript version we've
  * tested/written against.
  */
-#define GHOST_TRAP_VERSION      "1.4.10.00"
+#define GHOST_TRAP_VERSION      "1.4.10.02.1"
 #define GHOST_TRAP_COPYRIGHT    "Copyright (c) 2012-2023 PaperCut Software Pty Ltd"
 
 const wchar_t* PARAM_OUTPUT_FILE = L"OutputFile=";
@@ -236,9 +236,8 @@ static void AllowAccessToFile(sandbox::TargetPolicy &policy, wchar_t *file, BOOL
                                 ext);
         }
 
-        (void) policy.GetConfig()->AddRule(
-            sandbox::SubSystem::kFiles,
-            sandbox::Semantics::kFilesAllowAny,
+        (void) policy.GetConfig()->AllowFileAccess(
+            sandbox::FileSemantics::kAllowAny,
             path_rule
         );
     }
@@ -388,9 +387,8 @@ static void ApplyPolicy(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]
             _snwprintf(lib_path, MAX_PATH, L"%s\\*", part);
 
             // Whitelist the LIB dir.
-            (void) policy.GetConfig()->AddRule(
-                sandbox::SubSystem::kFiles,
-                sandbox::Semantics::kFilesAllowReadonly,
+            (void) policy.GetConfig()->AllowFileAccess(
+                sandbox::FileSemantics::kAllowReadonly,
                 lib_path
             );
 
@@ -406,9 +404,8 @@ static void ApplyPolicy(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]
         GetTempPath(MAX_PATH - 1, temp_dir);
         wchar_t dir_rule[MAX_PATH];
         _snwprintf(dir_rule, MAX_PATH - 1, L"%s*", temp_dir);
-        (void) policy.GetConfig()->AddRule(
-            sandbox::SubSystem::kFiles,
-            sandbox::Semantics::kFilesAllowAny,
+        (void) policy.GetConfig()->AllowFileAccess(
+            sandbox::FileSemantics::kAllowAny,
             dir_rule
         );
     }
@@ -420,9 +417,8 @@ static void ApplyPolicy(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]
         GetWindowsDirectory(win_dir, MAX_PATH - 1);
         wchar_t dir_rule[MAX_PATH];
         _snwprintf(dir_rule, MAX_PATH - 1, L"%s\\Fonts\\*", win_dir);
-        (void) policy.GetConfig()->AddRule(
-            sandbox::SubSystem::kFiles,
-            sandbox::Semantics::kFilesAllowReadonly,
+        (void) policy.GetConfig()->AllowFileAccess(
+            sandbox::FileSemantics::kAllowReadonly,
             dir_rule
         );
     }
@@ -466,9 +462,8 @@ static void ApplyPolicy(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]
                 GetWindowsDirectory(win_dir, MAX_PATH - 1);
                 wchar_t dir_rule[MAX_PATH];
                 _snwprintf(dir_rule, MAX_PATH - 1, L"%s\\Temp\\*", win_dir);
-                (void) policy.GetConfig()->AddRule(
-                    sandbox::SubSystem::kFiles,
-                    sandbox::Semantics::kFilesAllowAny,
+                (void) policy.GetConfig()->AllowFileAccess(
+                    sandbox::FileSemantics::kAllowAny,
                     dir_rule
                 );
             }
@@ -481,9 +476,8 @@ static void ApplyPolicy(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]
                 GetWindowsDirectory(win_dir, MAX_PATH - 1);
                 wchar_t dir_rule[MAX_PATH];
                 _snwprintf(dir_rule, MAX_PATH - 1, L"%s\\notepad.exe", win_dir);
-                (void) policy.GetConfig()->AddRule(
-                    sandbox::SubSystem::kFiles,
-                    sandbox::Semantics::kFilesAllowReadonly,
+                (void) policy.GetConfig()->AllowFileAccess(
+                    sandbox::FileSemantics::kAllowReadonly,
                     dir_rule
                 );
             }
