@@ -16,7 +16,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ## Download
 
-*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.4.10.02.1.exe)  (version 1.4)
+*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.4.10.02.exe)  (version 1.4)
 
 
 ## Motivation
