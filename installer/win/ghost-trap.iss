@@ -198,6 +198,8 @@ begin
 end;
 
 procedure CurStepChanged(CurStep : TSetupStep);
+var
+  ErrorCode : Integer;
 begin
   if curStep = ssPostInstall then begin
     if not WizardForm.Canceled then begin
@@ -205,7 +207,7 @@ begin
         case VCRuntimeMissingOptionsPage.Values[0] of
         0: begin
           { install dependencies now, using Microsoft's perma-link }
-          ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe');
+          ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
           Abort;
         end;
         1: begin
