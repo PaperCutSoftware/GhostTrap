@@ -1,4 +1,4 @@
-; Copyright (c) 2012-2023 PaperCut Software Pty Ltd
+; Copyright (c) 2012-2024 PaperCut Software Pty Ltd
 ; Author: Chris Dance <chris.dance@papercut.com>
 ; 
 ; License: GNU Affero GPL v3 - See project LICENSE file.
@@ -84,6 +84,22 @@ Filename: {app}\bin\{#gs_c_exe}; Parameters: "-q -dBATCH ""-sFONTDIR={code:Fonts
 Type: filesandordirs; Name: {app}\lib\cidfmap;
 
 [Code]
+
+const
+; Expected minimum version is 14.38.33130.00, for Visual C++ 2015 redistributable packs
+; Update the values here if our requirements change over time
+  MinMajor = 14;
+  { only applies if actual major version is 14, do not apply if actual major version is higher }
+  MinMinor = 38;
+  { only applies if actual major is 14 and actual minor 38, do not apply if previous versions are higher }
+  MinBld = 33130;
+
+; Used to store value of whether we have acceptable Visual C++ Runtime components
+var
+  HasAcceptableVCRuntime : Boolean;
+  VCRuntimeMissingOptionsPage : TInputOptionWizardPage;
+  IsInstallationFinishedNormally : Boolean;
+
 function FontsDirWithForwardSlashes(Param: String): String;
 begin
   { The system's Fonts directory in forward slash format }
@@ -114,5 +130,90 @@ begin
     sUnInstallString := GetUninstallString();
     sUnInstallString :=  RemoveQuotes(sUnInstallString);
     Exec(ExpandConstant(sUnInstallString), '/VERYSILENT', '', SW_SHOW, ewWaitUntilTerminated, iResultCode);
+  end;
+end;
+
+function IsAcceptableVCRuntimeInstalled() : Boolean;
+var
+  cMajor: Cardinal;
+  cMinor: Cardinal;
+  cBld: Cardinal;
+  cRbld: Cardinal;
+  sKey: String;
+begin
+  Result := False;
+  ; for more info see https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170#install-the-redistributable-packages
+  sKey := 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64';
+  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Major', cMajor) then begin
+    if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Minor', cMinor) then begin
+      if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Bld', cBld) then begin
+        if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'RBld', cRbld) then begin
+          if cMajor > MinMajor then begin
+            Result := True;
+            Exit;
+          end;
+
+          if cMajor < MinMajor then begin
+            Exit;
+          end;
+
+          if cMinor > MinMinor then begin
+            Result := True;
+            Exit;
+          end;
+
+          if cMinor < MinMinor then begin
+            Exit;
+          end;
+
+          if (cBld >= MinBld) and (cRbld >= 0) then begin
+            Result := True;
+          end;
+        end;
+      end;
+    end;
+  end;
+end;
+
+procedure InitializeWizard();
+begin
+  HasAcceptableVCRuntime := IsAcceptableVCRuntimeInstalled();
+; If the OS is missing required dependencies, the installation process will not go the full length and will be aborted early
+  if not HasAcceptableVCRuntime then begin
+    IsInstallationFinishedNormally := False;
+    VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpWelcome,
+      'Visual C++ Runtime Required',
+      'You are seeing this page because required dependencies for GhostTrap are missing on your operating system.',
+      'GhostTrap of version 1.4.10.02 and above requires reasonably up-to-date Visual C++ Runtimes to function properly. You must install required Microsoft Redistributables before installing GhostTrap.' + #13#10 + #13#10 + 'Either option will terminate the current installation process.' + #13#10 + 'Read more about this: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022',
+      False, False);
+
+    VCRuntimeMissingOptionsPage.Add('Install the dependencies from Microsoft now. (Recommended)');
+    VCRuntimeMissingOptionsPage.Add('I will find the required dependencies myself later.');
+  end;
+; If the OS has the required dependencies, completion of the installation is treated as normal
+  else
+  begin
+    IsInstallationFinishedNormally := True;
+  end;
+end;
+
+procedure CurStepChanged(CurStep : TSetupStep);
+begin
+  if curStep = ssPostInstall then begin
+    if not WizardForm.Canceled then begin
+      if not IsInstallationFinishedNormally then begin
+        case VCRuntimeMissingOptionsPage.Values[0] of
+        0: begin
+          { install dependencies now, using Microsoft's perma-link }
+          ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe');
+          Abort;
+        end;
+        1: begin
+          { do it later themselves }
+          MsgBox('Please install required VC++ dependencies first and try again.', mbInformation, MB_OK);
+          Abort;
+        end;
+      end;
+    end;
   end;
 end;
