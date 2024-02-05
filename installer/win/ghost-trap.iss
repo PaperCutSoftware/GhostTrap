@@ -96,7 +96,7 @@ const
 
 ; Used to store value of whether we have acceptable Visual C++ Runtime components
 var
-  HasAcceptableVCRuntime : Boolean;
+  HasRequiredVCRuntimeVersion : Boolean;
   VCRuntimeMissingOptionsPage : TInputOptionWizardPage;
   IsInstallationFinishedNormally : Boolean;
 
@@ -133,7 +133,7 @@ begin
   end;
 end;
 
-function IsAcceptableVCRuntimeInstalled() : Boolean;
+function IsRequiredVCRuntimeVersionInstalled() : Boolean;
 var
   cMajor: Cardinal;
   cMinor: Cardinal;
@@ -177,9 +177,9 @@ end;
 
 procedure InitializeWizard();
 begin
-  HasAcceptableVCRuntime := IsAcceptableVCRuntimeInstalled();
+  HasRequiredVCRuntimeVersion := IsRequiredVCRuntimeVersionInstalled();
 ; If the OS is missing required dependencies, the installation process will not go the full length and will be aborted early
-  if not HasAcceptableVCRuntime then begin
+  if not HasRequiredVCRuntimeVersion then begin
     IsInstallationFinishedNormally := False;
     VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpWelcome,
       'Visual C++ Runtime Required',
@@ -201,21 +201,17 @@ procedure CurStepChanged(CurStep : TSetupStep);
 var
   ErrorCode : Integer;
 begin
-  if curStep = ssPostInstall then begin
-    if not WizardForm.Canceled then begin
-      if not IsInstallationFinishedNormally then begin
-        case VCRuntimeMissingOptionsPage.Values[0] of
-        0: begin
-          { install dependencies now, using Microsoft's perma-link }
-          ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
-          Abort;
-        end;
-        1: begin
-          { do it later themselves }
-          MsgBox('Please install required VC++ dependencies first and try again.', mbInformation, MB_OK);
-          Abort;
-        end;
-      end;
+  if (curStep = ssPostInstall) and not ((WizardForm.Canceled) or (IsInstallationFinishedNormally)) then begin
+    case VCRuntimeMissingOptionsPage.Values[0] of
+    0: begin
+      { install dependencies now, using Microsoft's perma-link }
+      ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
+      Abort;
+    end;
+    1: begin
+      { do it later themselves }
+      MsgBox('Please install required VC++ dependencies first and try again.', mbInformation, MB_OK);
+      Abort;
     end;
   end;
 end;
