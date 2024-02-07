@@ -98,7 +98,6 @@ const
 var
   HasRequiredVCRuntimeVersion : Boolean;
   VCRuntimeMissingOptionsPage : TInputOptionWizardPage;
-  IsInstallationFinishedNormally : Boolean;
   ReadMoreLink : TLabel;
 
 procedure ExitProcess(ExitCode : Integer);
@@ -222,7 +221,7 @@ begin
   if CurPageID = VCRuntimeMissingOptionsPage.ID then begin
     InstallNow := VCRuntimeMissingOptionsPage.Values[0];
     if InstallNow then begin
-      if MsgBox('Would you like to install required dependencies now?', mbInformation, MB_YESNO or MB_DEFBUTTON2) = IDYES then begin
+      if MsgBox('Would you like to install required dependencies now?', mbInformation, MB_YESNO or MB_DEFBUTTON1) = IDYES then begin
         ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
         ExitProcess(9); { Custom exit code }
       end;
@@ -241,7 +240,6 @@ begin
   HasRequiredVCRuntimeVersion := IsRequiredVCRuntimeVersionInstalled();
   { If the OS is missing required dependencies, the installation process will not go the full length and will be aborted early }
   if not HasRequiredVCRuntimeVersion then begin
-    IsInstallationFinishedNormally := False;
     VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpLicense,
       'Visual C++ Runtime Required',
       'You are seeing this page because required dependencies for GhostTrap are missing on your operating system.',
@@ -252,9 +250,5 @@ begin
     VCRuntimeMissingOptionsPage.Add('I will find the required dependencies myself later.');
     VCRuntimeMissingOptionsPage.Values[0] := True;
     CreateLink();
-  end
-  { If the OS has the required dependencies, completion of the installation is treated as normal }
-  else begin
-    IsInstallationFinishedNormally := True;
   end;
 end;
