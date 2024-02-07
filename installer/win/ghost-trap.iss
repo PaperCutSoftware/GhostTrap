@@ -1,6 +1,6 @@
 ; Copyright (c) 2012-2024 PaperCut Software Pty Ltd
 ; Author: Chris Dance <chris.dance@papercut.com>
-; 
+;
 ; License: GNU Affero GPL v3 - See project LICENSE file.
 ;
 ; Ghost Trap Inno Setup based installer script.
@@ -86,19 +86,23 @@ Type: filesandordirs; Name: {app}\lib\cidfmap;
 [Code]
 
 const
-; Expected minimum version is 14.38.33130.00, for Visual C++ 2015 redistributable packs
-; Update the values here if our requirements change over time
+  { Expected minimum version is 14.38.33130.00, for Visual C++ 2015 redistributable packs
+    Update the values here if our requirements change over time }
   MinMajor = 14;
   { only applies if actual major version is 14, do not apply if actual major version is higher }
   MinMinor = 38;
   { only applies if actual major is 14 and actual minor 38, do not apply if previous versions are higher }
   MinBld = 33130;
 
-; Used to store value of whether we have acceptable Visual C++ Runtime components
+  { Used to store value of whether we have acceptable Visual C++ Runtime components }
 var
   HasRequiredVCRuntimeVersion : Boolean;
   VCRuntimeMissingOptionsPage : TInputOptionWizardPage;
   IsInstallationFinishedNormally : Boolean;
+  ReadMoreLink : TLabel;
+
+procedure ExitProcess(ExitCode : Integer);
+  external 'ExitProcess@kernel32.dll stdcall';
 
 function FontsDirWithForwardSlashes(Param: String): String;
 begin
@@ -142,7 +146,7 @@ var
   sKey: String;
 begin
   Result := False;
-  ; for more info see https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170#install-the-redistributable-packages
+  { for more info see https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170#install-the-redistributable-packages }
   sKey := 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64';
   if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Major', cMajor) then begin
     if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Minor', cMinor) then begin
@@ -175,43 +179,82 @@ begin
   end;
 end;
 
-procedure InitializeWizard();
+procedure OpenBrowser(Url: string);
+var
+  ErrorCode: Integer;
 begin
-  HasRequiredVCRuntimeVersion := IsRequiredVCRuntimeVersionInstalled();
-; If the OS is missing required dependencies, the installation process will not go the full length and will be aborted early
-  if not HasRequiredVCRuntimeVersion then begin
-    IsInstallationFinishedNormally := False;
-    VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpWelcome,
-      'Visual C++ Runtime Required',
-      'You are seeing this page because required dependencies for GhostTrap are missing on your operating system.',
-      'GhostTrap of version 1.4.10.02 and above requires reasonably up-to-date Visual C++ Runtimes to function properly. You must install required Microsoft Redistributables before installing GhostTrap.' + #13#10 + #13#10 + 'Either option will terminate the current installation process.' + #13#10 + 'Read more about this: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022',
-      False, False);
+  ShellExec('open', Url, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
+end;
 
-    VCRuntimeMissingOptionsPage.Add('Install the dependencies from Microsoft now. (Recommended)');
-    VCRuntimeMissingOptionsPage.Add('I will find the required dependencies myself later.');
-  end;
-; If the OS has the required dependencies, completion of the installation is treated as normal
-  else
-  begin
-    IsInstallationFinishedNormally := True;
+procedure ReadMoreLinkClick(Sender : TObject);
+begin
+  OpenBrowser('https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022');
+end;
+
+procedure CreateLink();
+begin
+  ReadMoreLink := TLabel.Create(WizardForm);
+  ReadMoreLink.Parent := WizardForm;
+  ReadMoreLink.Left := 8;
+  ReadMoreLink.Top := WizardForm.ClientHeight - ReadMoreLink.ClientHeight - 15;
+  ReadMoreLink.Cursor := crHand;
+  ReadMoreLink.Font.Color := clBlue;
+  ReadMoreLink.Caption := 'Read more about C++ dependencies';
+  ReadMoreLink.OnCLick := @ReadMoreLinkClick;
+end;
+
+{ Only display Read More link on added custom page, also set up custom page }
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  ReadMoreLink.Visible := CurPageID = VCRuntimeMissingOptionsPage.ID;
+  if CurPageID = VCRuntimeMissingOptionsPage.ID then begin
+    WizardForm.BackButton.Visible := False;
+    WizardForm.CancelButton.Visible := False;
+    WizardForm.NextButton.Caption := 'Finish';
   end;
 end;
 
-procedure CurStepChanged(CurStep : TSetupStep);
+function NextButtonClick(CurPageID: Integer): Boolean;
 var
   ErrorCode : Integer;
+  InstallNow : Boolean;
 begin
-  if (curStep = ssPostInstall) and not ((WizardForm.Canceled) or (IsInstallationFinishedNormally)) then begin
-    case VCRuntimeMissingOptionsPage.Values[0] of
-    0: begin
-      { install dependencies now, using Microsoft's perma-link }
-      ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
-      Abort;
-    end;
-    1: begin
-      { do it later themselves }
+  if CurPageID = VCRuntimeMissingOptionsPage.ID then begin
+    InstallNow := VCRuntimeMissingOptionsPage.Values[0];
+    if InstallNow then begin
+      if MsgBox('Would you like to install required dependencies now?', mbInformation, MB_YESNO or MB_DEFBUTTON2) = IDYES then begin
+        ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
+        ExitProcess(9); { Custom exit code }
+      end;
+    end else begin
       MsgBox('Please install required VC++ dependencies first and try again.', mbInformation, MB_OK);
-      Abort;
+      ExitProcess(9); { Custom exit code }
     end;
+    Result := False;
+  end else begin
+    Result := True;
+  end;
+end;
+
+procedure InitializeWizard();
+begin
+  HasRequiredVCRuntimeVersion := IsRequiredVCRuntimeVersionInstalled();
+  { If the OS is missing required dependencies, the installation process will not go the full length and will be aborted early }
+  if not HasRequiredVCRuntimeVersion then begin
+    IsInstallationFinishedNormally := False;
+    VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpLicense,
+      'Visual C++ Runtime Required',
+      'You are seeing this page because required dependencies for GhostTrap are missing on your operating system.',
+      'GhostTrap of version 1.4.10.02 and above requires reasonably up-to-date Visual C++ Runtimes to function properly. You must install required Microsoft Redistributables before installing GhostTrap.' + #13#10 + #13#10 + 'Either option will terminate the current installation process.',
+      True, False);
+
+    VCRuntimeMissingOptionsPage.Add('&Install the dependencies from Microsoft now. (Recommended)');
+    VCRuntimeMissingOptionsPage.Add('I will find the required dependencies myself later.');
+    VCRuntimeMissingOptionsPage.Values[0] := True;
+    CreateLink();
+  end
+  { If the OS has the required dependencies, completion of the installation is treated as normal }
+  else begin
+    IsInstallationFinishedNormally := True;
   end;
 end;
