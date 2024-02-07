@@ -198,7 +198,7 @@ begin
   ReadMoreLink.Top := WizardForm.ClientHeight - ReadMoreLink.ClientHeight - 15;
   ReadMoreLink.Cursor := crHand;
   ReadMoreLink.Font.Color := clBlue;
-  ReadMoreLink.Caption := 'Read more about C++ dependencies';
+  ReadMoreLink.Caption := 'Read more about Visual C++ dependencies';
   ReadMoreLink.OnCLick := @ReadMoreLinkClick;
 end;
 
@@ -239,10 +239,8 @@ end;
 { While the custom page is always created, it should be skipped if dependencies are already installed }
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
-  Result := False;
-  if (PageID = VCRuntimeMissingOptionsPage.ID) and HasRequiredVCRuntimeVersion then begin
-    Result := True;
-  end;
+  { For potentially different custom page in the future, compare page ID one at a time }
+  Result := (PageID = VCRuntimeMissingOptionsPage.ID) and HasRequiredVCRuntimeVersion;
 end;
 
 procedure InitializeWizard();
