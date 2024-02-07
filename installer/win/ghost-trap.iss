@@ -235,20 +235,26 @@ begin
   end;
 end;
 
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  if (PageID = VCRuntimeMissingOptionsPage.ID) and HasRequiredVCRuntimeVersion then begin
+    Result := True;
+  end;
+end;
+
 procedure InitializeWizard();
 begin
   HasRequiredVCRuntimeVersion := IsRequiredVCRuntimeVersionInstalled();
   { If the OS is missing required dependencies, the installation process will not go the full length and will be aborted early }
-  if not HasRequiredVCRuntimeVersion then begin
-    VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpLicense,
-      'Visual C++ Runtime Required',
-      'You are seeing this page because required dependencies for GhostTrap are missing on your operating system.',
-      'GhostTrap of version 1.4.10.02 and above requires reasonably up-to-date Visual C++ Runtimes to function properly. You must install required Microsoft Redistributables before installing GhostTrap.' + #13#10 + #13#10 + 'Either option will terminate the current installation process.',
-      True, False);
+  VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpLicense,
+    'Visual C++ Runtime Required',
+    'You are seeing this page because required dependencies for GhostTrap are missing on your operating system.',
+    'GhostTrap of version 1.4.10.02 and above requires reasonably up-to-date Visual C++ Runtimes to function properly. You must install required Microsoft Redistributables before installing GhostTrap.' + #13#10 + #13#10 + 'Either option will terminate the current installation process.',
+    True, False);
 
-    VCRuntimeMissingOptionsPage.Add('&Install the dependencies from Microsoft now. (Recommended)');
-    VCRuntimeMissingOptionsPage.Add('I will find the required dependencies myself later.');
-    VCRuntimeMissingOptionsPage.Values[0] := True;
-    CreateLink();
-  end;
+  VCRuntimeMissingOptionsPage.Add('&Install the dependencies from Microsoft now. (Recommended)');
+  VCRuntimeMissingOptionsPage.Add('I will find the required dependencies myself later.');
+  VCRuntimeMissingOptionsPage.Values[0] := True;
+  CreateLink();
 end;
