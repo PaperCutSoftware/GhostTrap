@@ -218,6 +218,7 @@ var
   ErrorCode : Integer;
   InstallNow : Boolean;
 begin
+  { Handle the "Finish" button being clicked on the custom page }
   if CurPageID = VCRuntimeMissingOptionsPage.ID then begin
     InstallNow := VCRuntimeMissingOptionsPage.Values[0];
     if InstallNow then begin
@@ -235,6 +236,7 @@ begin
   end;
 end;
 
+{ While the custom page is always created, it should be skipped if dependencies are already installed }
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
   Result := False;
@@ -245,8 +247,9 @@ end;
 
 procedure InitializeWizard();
 begin
+  { If the OS is missing required dependencies, the installation process will not go the full length and will be exited early }
   HasRequiredVCRuntimeVersion := IsRequiredVCRuntimeVersionInstalled();
-  { If the OS is missing required dependencies, the installation process will not go the full length and will be aborted early }
+  { Create the custom page to handle the scenario where dependencies don't exist }
   VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpLicense,
     'Visual C++ Runtime Required',
     'You are seeing this page because required dependencies for GhostTrap are missing on your operating system.',
