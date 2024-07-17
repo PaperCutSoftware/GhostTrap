@@ -1,6 +1,7 @@
 /target/
 /third-party/chromium/*
 /third-party/ghostpdl/*
+**/.vs/*
 
 # editors
 /.idea/*

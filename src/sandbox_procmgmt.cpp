@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 PaperCut Software Pty Ltd
+ * Copyright (c) 2012-2024 PaperCut Software Pty Ltd
  * http://www.papercut.com/
  *
  * Author: Chris Dance <chris.dance@papercut.com>
@@ -166,7 +166,7 @@ static DWORD WINAPI ProvideStdIn(void *param) {
  * This method copies the original wrappers' behaviour with optimization for common parameters.
 */
 bool GrantAccessToObject(HANDLE object, base::win::WellKnownSid known_sid) {
-    absl::optional<base::win::SecurityDescriptor> sd = base::win::SecurityDescriptor::FromHandle(
+    std::optional<base::win::SecurityDescriptor> sd = base::win::SecurityDescriptor::FromHandle(
             object, base::win::SecurityObjectType::kKernel, DACL_SECURITY_INFORMATION);
     if (!sd) {
         return false;
