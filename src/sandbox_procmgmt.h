@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2023 PaperCut Software Pty Ltd
+ * Copyright (c) 2012-2024 PaperCut Software Pty Ltd
  * http://www.papercut.com/
  *
  * Author: Chris Dance <chris.dance@papercut.com>

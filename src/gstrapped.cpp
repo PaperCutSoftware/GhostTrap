@@ -43,7 +43,7 @@
  * Ghost Trap version number starts at 1 and suffixes the Ghostscript version we've
  * tested/written against.
  */
-#define GHOST_TRAP_VERSION      "1.4.10.03.1"
+#define GHOST_TRAP_VERSION      "1.5.10.03.1"
 #define GHOST_TRAP_COPYRIGHT    "Copyright (c) 2012-2024 PaperCut Software Pty Ltd"
 
 const wchar_t* PARAM_OUTPUT_FILE = L"OutputFile=";

@@ -16,7 +16,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ## Download
 
-*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.4.10.03.exe)  (version 1.4.10.03)
+*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.5.10.03.exe)  (version 1.5.10.03)
 
 
 ## Motivation
@@ -93,6 +93,9 @@ escape vectors.
 
 
 ## Release History
+
+### [1.5.10.03.1] - 2024-08-09
+ * Installer compatible with ARM64 Windows.
 
 ### [1.4.10.03.1] - 2024-07-17
  * Updated to Ghostscript 10.03.1 (2024-05-02).
@@ -203,6 +206,7 @@ The following future refinements are planned:
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+[1.5.10.03.1]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.4.10.03.1...v1.5.10.03.1
 [1.4.10.03.1]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.4.10.02.1...v1.4.10.03.1
 [1.4.10.02.1]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.4.10.00...v1.4.10.02.1
 [1.4.10.00]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.3.9.27...v1.4.10.00
