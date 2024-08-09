@@ -30,7 +30,7 @@ AppPublisherURL=https://github.com/PaperCutSoftware/GhostTrap
 AppSupportURL=https://github.com/PaperCutSoftware/GhostTrap/issues
 AppUpdatesURL=https://github.com/PaperCutSoftware/GhostTrap
 DefaultDirName={commonpf}\{#app_name_no_space}
-ArchitecturesAllowed=x64
+ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64
 
 LicenseFile=..\..\LICENSE.rtf
