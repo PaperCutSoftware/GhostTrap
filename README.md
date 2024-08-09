@@ -158,7 +158,7 @@ The following future refinements are planned:
 ### Requirements
 
  *  Visual Studio 2019 or 2017
- *  [Inno Setup 6](http://www.jrsoftware.org/isinfo.php)
+ *  [Inno Setup 6.3](http://www.jrsoftware.org/isinfo.php)
 
 
 ## Building
