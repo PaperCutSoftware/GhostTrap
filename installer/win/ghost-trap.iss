@@ -61,6 +61,8 @@ Source: *; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: bin\gsc-trapped.exe; DestDir: {app}\bin\; DestName: gswin32c-trapped.exe;
 Source: bin\gs.exe; DestDir: {app}\bin\; DestName: gswin32.exe;
 Source: bin\gsc.exe; DestDir: {app}\bin\; DestName: gswin32c.exe;
+Source: vc_redist.x64.exe; DestDir: {app}; DestName: vc_redist.x64.exe; Flags: deleteafterinstall; AfterInstall: InstallVCRedist
+Source: vc_redist.x86.exe; DestDir: {app}; DestName: vc_redist.x86.exe; Flags: deleteafterinstall; AfterInstall: InstallVCRedist
 
 
 [Registry]
@@ -84,24 +86,8 @@ Filename: {app}\bin\{#gs_c_exe}; Parameters: "-q -dBATCH ""-sFONTDIR={code:Fonts
 Type: filesandordirs; Name: {app}\lib\cidfmap;
 
 [Code]
-
-const
-  { Expected minimum version is 14.38.33130.00, for Visual C++ 2015 redistributable packs
-    Update the values here if our requirements change over time }
-  MinMajor = 14;
-  { only applies if actual major version is 14, do not apply if actual major version is higher }
-  MinMinor = 38;
-  { only applies if actual major is 14 and actual minor 38, do not apply if previous versions are higher }
-  MinBld = 33130;
-
-  { Used to store value of whether we have acceptable Visual C++ Runtime components }
 var
-  HasRequiredVCRuntimeVersion : Boolean;
-  VCRuntimeMissingOptionsPage : TInputOptionWizardPage;
-  ReadMoreLink : TLabel;
-
-procedure ExitProcess(ExitCode : Integer);
-  external 'ExitProcess@kernel32.dll stdcall';
+  VC_Redist_Installed: Boolean = False;
 
 function FontsDirWithForwardSlashes(Param: String): String;
 begin
@@ -136,126 +122,65 @@ begin
   end;
 end;
 
-function IsRequiredVCRuntimeVersionInstalled() : Boolean;
+function IsDependencyInstallationAlreadyRunning(const Filter: string): Boolean;
 var
-  cMajor: Cardinal;
-  cMinor: Cardinal;
-  cBld: Cardinal;
-  cRbld: Cardinal;
-  sKey: String;
+  WbemObjectSet: Variant;
 begin
   Result := False;
-  { for more info see https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170#install-the-redistributable-packages }
-  sKey := 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64';
-  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Major', cMajor) then begin
-    if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Minor', cMinor) then begin
-      if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Bld', cBld) then begin
-        if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'RBld', cRbld) then begin
-          if cMajor > MinMajor then begin
-            Result := True;
-            Exit;
-          end;
+  try
+    WbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
+    WbemServices := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
 
-          if cMajor < MinMajor then begin
-            Exit;
-          end;
+    WQLQuery :=
+      'SELECT ' +
+      'ProcessId, ' +
+      'Name, ' +
+      'ExecutablePath ' +
+      'FROM Win32_Process ' +
+      'WHERE ' +
+      'Name LIKE "%' + Filter + '%"';
 
-          if cMinor > MinMinor then begin
-            Result := True;
-            Exit;
-          end;
-
-          if cMinor < MinMinor then begin
-            Exit;
-          end;
-
-          if (cBld >= MinBld) and (cRbld >= 0) then begin
-            Result := True;
-          end;
-        end;
-      end;
+    WbemObjectSet := WbemServices.ExecQuery(WQLQuery);
+    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
+    begin
+      Result := True;
     end;
+  except
+    Result := False;
   end;
 end;
 
-procedure OpenBrowser(Url: string);
+procedure InstallVCRedist();
 var
   ErrorCode: Integer;
+  VC_Redist: String;
 begin
-  ShellExec('open', Url, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
-end;
-
-procedure ReadMoreLinkClick(Sender : TObject);
-begin
-  OpenBrowser('https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022');
-end;
-
-procedure CreateLink();
-begin
-  ReadMoreLink := TLabel.Create(WizardForm);
-  ReadMoreLink.Parent := WizardForm;
-  ReadMoreLink.Left := 8;
-  ReadMoreLink.Top := WizardForm.ClientHeight - ReadMoreLink.ClientHeight - 15;
-  ReadMoreLink.Cursor := crHand;
-  ReadMoreLink.Font.Color := clBlue;
-  ReadMoreLink.Caption := 'Read more about Visual C++ dependencies';
-  ReadMoreLink.OnCLick := @ReadMoreLinkClick;
-end;
-
-{ Only display Read More link on added custom page, also set up custom page }
-procedure CurPageChanged(CurPageID: Integer);
-begin
-  ReadMoreLink.Visible := CurPageID = VCRuntimeMissingOptionsPage.ID;
-  if CurPageID = VCRuntimeMissingOptionsPage.ID then begin
-    WizardForm.BackButton.Visible := False;
-    WizardForm.CancelButton.Visible := False;
-    WizardForm.NextButton.Caption := 'Finish';
+  if VC_Redist_Installed then
+  begin
+    Log('Already installed. Skipping.');
+    Exit;
   end;
-end;
 
-function NextButtonClick(CurPageID: Integer): Boolean;
-var
-  ErrorCode : Integer;
-  InstallNow : Boolean;
-begin
-  { Handle the "Finish" button being clicked on the custom page }
-  if CurPageID = VCRuntimeMissingOptionsPage.ID then begin
-    InstallNow := VCRuntimeMissingOptionsPage.Values[0];
-    if InstallNow then begin
-      if MsgBox('Would you like to install required dependencies now?', mbInformation, MB_YESNO or MB_DEFBUTTON1) = IDYES then begin
-        ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
-        ExitProcess(9); { Custom exit code }
-      end;
-    end else begin
-      MsgBox('Please install required VC++ dependencies first and try again.', mbInformation, MB_OK);
-      ExitProcess(9); { Custom exit code }
+  if IsWin64 then
+    VC_Redist := ExpandConstant('{app}\vc_redist_x64.exe')
+  else
+    VC_Redist := ExpandConstant('{app}\vc_redist_x86.exe');
+
+  if not IsDependencyInstallationAlreadyRunning('VC_redist') then
+  begin
+    if Exec(VC_Redist, '/norestart /install /quiet', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
+    begin
+      Log('VC dependencies successfully installed.');
+      VC_Redist_Installed := True;
     end;
-    Result := False;
-  end else begin
-    Result := True;
+    else
+    begin
+      Log(Format('Failed to launch VC++ Redistributable installer. Error Code: %d', [ErrorCode]));
+    end;
+
+    if ErrorCode <> 0 then
+    begin
+      Log(Format('VC++ Redistributable installation failed with exit code: ', [ErrorCode]));
+    end;
   end;
-end;
-
-{ While the custom page is always created, it should be skipped if dependencies are already installed }
-function ShouldSkipPage(PageID: Integer): Boolean;
-begin
-  { For potentially different custom page in the future, compare page ID one at a time }
-  Result := (PageID = VCRuntimeMissingOptionsPage.ID) and HasRequiredVCRuntimeVersion;
-end;
-
-procedure InitializeWizard();
-begin
-  { If the OS is missing required dependencies, the installation process will not go the full length and will be exited early }
-  HasRequiredVCRuntimeVersion := IsRequiredVCRuntimeVersionInstalled();
-  { Create the custom page to handle the scenario where dependencies don't exist }
-  VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpLicense,
-    'Visual C++ Runtime Required',
-    'You are seeing this page because required dependencies for GhostTrap are missing on your operating system.',
-    'GhostTrap of version 1.4.10.02 and above requires reasonably up-to-date Visual C++ Runtimes to function properly. You must install required Microsoft Redistributables before installing GhostTrap.' + #13#10 + #13#10 + 'Either option will terminate the current installation process.',
-    True, False);
-
-  VCRuntimeMissingOptionsPage.Add('&Install the dependencies from Microsoft now. (Recommended)');
-  VCRuntimeMissingOptionsPage.Add('I will find the required dependencies myself later.');
-  VCRuntimeMissingOptionsPage.Values[0] := True;
-  CreateLink();
 end;
