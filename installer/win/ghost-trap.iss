@@ -87,7 +87,7 @@ Type: filesandordirs; Name: {app}\lib\cidfmap;
 
 [Code]
 var
-  VC_Redist_Installed: Boolean = False;
+  VC_Redist_Installed: Boolean;
 
 function FontsDirWithForwardSlashes(Param: String): String;
 begin
@@ -120,11 +120,15 @@ begin
     sUnInstallString :=  RemoveQuotes(sUnInstallString);
     Exec(ExpandConstant(sUnInstallString), '/VERYSILENT', '', SW_SHOW, ewWaitUntilTerminated, iResultCode);
   end;
+  VC_Redist_Installed := False;
 end;
 
 function IsDependencyInstallationAlreadyRunning(const Filter: string): Boolean;
 var
   WbemObjectSet: Variant;
+  WbemLocator: Variant;
+  WbemServices: Variant;
+  WQLQuery: String;
 begin
   Result := False;
   try
@@ -162,12 +166,13 @@ begin
   end;
 
   if IsWin64 then
-    VC_Redist := ExpandConstant('{app}\vc_redist_x64.exe')
+    VC_Redist := ExpandConstant('{app}\vc_redist.x64.exe')
   else
-    VC_Redist := ExpandConstant('{app}\vc_redist_x86.exe');
+    VC_Redist := ExpandConstant('{app}\vc_redist.x86.exe');
 
   if not IsDependencyInstallationAlreadyRunning('VC_redist') then
   begin
+    Log(Format('The VC++ dependency to install will be: %s', [VC_Redist]));
     if Exec(VC_Redist, '/norestart /install /quiet', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
     begin
       Log('VC dependencies successfully installed.');
