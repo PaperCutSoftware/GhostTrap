@@ -1,4 +1,4 @@
-; Copyright (c) 2012-2024 PaperCut Software Pty Ltd
+; Copyright (c) 2012-2025 PaperCut Software Pty Ltd
 ; Author: Chris Dance <chris.dance@papercut.com>
 ;
 ; License: GNU Affero GPL v3 - See project LICENSE file.
@@ -61,7 +61,7 @@ Source: *; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: bin\gsc-trapped.exe; DestDir: {app}\bin\; DestName: gswin32c-trapped.exe;
 Source: bin\gs.exe; DestDir: {app}\bin\; DestName: gswin32.exe;
 Source: bin\gsc.exe; DestDir: {app}\bin\; DestName: gswin32c.exe;
-Source: vc_redist.x64.exe; DestDir: {app}; DestName: vc_redist.x64.exe; AfterInstall: InstallVCRedist
+Source: vc_redist.x64.exe; DestDir: {app}; DestName: vc_redist.x64.exe;
 Source: vc_redist.x86.exe; DestDir: {app}; DestName: vc_redist.x86.exe; AfterInstall: InstallVCRedist
 
 
@@ -86,9 +86,6 @@ Filename: {app}\bin\{#gs_c_exe}; Parameters: "-q -dBATCH ""-sFONTDIR={code:Fonts
 Type: filesandordirs; Name: {app}\lib\cidfmap;
 
 [Code]
-var
-  VC_Redist_Installed: Boolean;
-
 function FontsDirWithForwardSlashes(Param: String): String;
 begin
   { The system's Fonts directory in forward slash format }
@@ -120,7 +117,6 @@ begin
     sUnInstallString :=  RemoveQuotes(sUnInstallString);
     Exec(ExpandConstant(sUnInstallString), '/VERYSILENT', '', SW_SHOW, ewWaitUntilTerminated, iResultCode);
   end;
-  VC_Redist_Installed := False;
 end;
 
 function IsDependencyInstallationAlreadyRunning(const Filter: string): Boolean;
@@ -160,7 +156,7 @@ var
   VC_Redist: String;
   VC_Redist_Unused: String;
 begin
-  if isDeviceWin64() then
+  if isWin64 then
   begin
     VC_Redist := ExpandConstant('{app}\vc_redist.x64.exe');
     VC_Redist_Unused := ExpandConstant('{app}\vc_redist.x86.exe');
@@ -172,15 +168,9 @@ begin
   end;
 
   if DeleteFile(VC_Redist_Unused) then
-    Log('Deleted unused VC++ deps installer')
+    Log(Format('Deleted unused VC++ deps installer, %s', [VC_Redist_Unused]))
   else
     Log(Format('Failed to delete unused VC deps installer, %s', [VC_Redist_Unused]));
-
-  if VC_Redist_Installed then
-  begin
-    Log('Already installed. Skipping.');
-    Exit;
-  end;
 
   if not IsDependencyInstallationAlreadyRunning('VC_redist') then
   begin
@@ -188,7 +178,6 @@ begin
     if Exec(VC_Redist, '/norestart /install /quiet', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
     begin
       Log('VC dependencies successfully installed.');
-      VC_Redist_Installed := True;
     end
     else
     begin
@@ -197,7 +186,7 @@ begin
 
     if ErrorCode <> 0 then
     begin
-      Log(Format('VC++ Redistributable installation failed with exit code: ', [ErrorCode]));
+      Log(Format('VC++ Redistributable installation failed with exit code: %d', [ErrorCode]));
     end;
 
     if DeleteFile(VC_Redist) then
@@ -205,9 +194,4 @@ begin
     else
       Log(Format('Failed to delete used VC++ installer %s!', [VC_Redist]));
   end;
-end;
-
-function isDeviceWin64(): Boolean;
-begin
-  Result := IsWin64;
 end;
