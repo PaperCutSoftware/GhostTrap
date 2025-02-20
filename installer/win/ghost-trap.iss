@@ -61,8 +61,8 @@ Source: *; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: bin\gsc-trapped.exe; DestDir: {app}\bin\; DestName: gswin32c-trapped.exe;
 Source: bin\gs.exe; DestDir: {app}\bin\; DestName: gswin32.exe;
 Source: bin\gsc.exe; DestDir: {app}\bin\; DestName: gswin32c.exe;
-Source: vc_redist.x64.exe; DestDir: {app}; DestName: vc_redist.x64.exe; Flags: deleteafterinstall; AfterInstall: InstallVCRedist
-Source: vc_redist.x86.exe; DestDir: {app}; DestName: vc_redist.x86.exe; Flags: deleteafterinstall; AfterInstall: InstallVCRedist
+Source: vc_redist.x64.exe; DestDir: {app}; DestName: vc_redist.x64.exe; AfterInstall: InstallVCRedist
+Source: vc_redist.x86.exe; DestDir: {app}; DestName: vc_redist.x86.exe; AfterInstall: InstallVCRedist
 
 
 [Registry]
@@ -158,17 +158,29 @@ procedure InstallVCRedist();
 var
   ErrorCode: Integer;
   VC_Redist: String;
+  VC_Redist_Unused: String;
 begin
+  if isDeviceWin64() then
+  begin
+    VC_Redist := ExpandConstant('{app}\vc_redist.x64.exe');
+    VC_Redist_Unused := ExpandConstant('{app}\vc_redist.x86.exe');
+  end    
+  else
+  begin
+    VC_Redist := ExpandConstant('{app}\vc_redist.x86.exe');
+    VC_Redist_Unused := ExpandConstant('{app}\vc_redist.x64.exe');
+  end;
+
+  if DeleteFile(VC_Redist_Unused) then
+    Log('Deleted unused VC++ deps installer')
+  else
+    Log(Format('Failed to delete unused VC deps installer, %s', [VC_Redist_Unused]));
+
   if VC_Redist_Installed then
   begin
     Log('Already installed. Skipping.');
     Exit;
   end;
-
-  if IsWin64 then
-    VC_Redist := ExpandConstant('{app}\vc_redist.x64.exe')
-  else
-    VC_Redist := ExpandConstant('{app}\vc_redist.x86.exe');
 
   if not IsDependencyInstallationAlreadyRunning('VC_redist') then
   begin
@@ -177,7 +189,7 @@ begin
     begin
       Log('VC dependencies successfully installed.');
       VC_Redist_Installed := True;
-    end;
+    end
     else
     begin
       Log(Format('Failed to launch VC++ Redistributable installer. Error Code: %d', [ErrorCode]));
@@ -187,5 +199,15 @@ begin
     begin
       Log(Format('VC++ Redistributable installation failed with exit code: ', [ErrorCode]));
     end;
+
+    if DeleteFile(VC_Redist) then
+      Log(Format('Successfully deleted used VC++ installer %s', [VC_Redist]))
+    else
+      Log(Format('Failed to delete used VC++ installer %s!', [VC_Redist]));
   end;
+end;
+
+function isDeviceWin64(): Boolean;
+begin
+  Result := IsWin64;
 end;
