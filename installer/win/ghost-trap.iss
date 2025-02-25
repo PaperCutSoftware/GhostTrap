@@ -149,6 +149,8 @@ begin
   end;
 end;
 
+{ The same version of VC++ dependency that is used by GhostScript will be automatically installed by GhostTrap }
+{ Requires manual updating if the version used by GhostScript changes in order to mirror the dependency updates }
 procedure InstallVCRedist();
 var
   ErrorCode: Integer;
