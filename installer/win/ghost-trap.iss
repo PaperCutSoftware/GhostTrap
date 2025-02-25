@@ -64,7 +64,7 @@ Source: bin\gsc.exe; DestDir: {app}\bin\; DestName: gswin32c.exe;
 ; This is the Microsoft's redistributable binaries for VC++ dependency, we should provide the exact same build as it is
 ; is used by GhostScript. As of 25/3/25, the build number is 30153, with a full version number of 14.29.30153. Manually
 ; update this file whenever necessary.
-Source: ..\..\installer\redist\vc_redist.x64.exe; DestDir: {app}; DestName: vc_redist.x64.exe; AfterInstall: InstallVCRedist
+Source: ..\..\installer\redist\VC_redist.x64.exe; DestDir: {app}; DestName: VC_redist.x64.exe; AfterInstall: InstallVCRedist
 
 
 [Registry]
@@ -130,7 +130,7 @@ var
   VC_Redist_Relocated: String;
   Relocated_Dir: String;
 begin
-  VC_Redist := ExpandConstant('{app}\vc_redist.x64.exe');
+  VC_Redist := ExpandConstant('{app}\VC_redist.x64.exe');
   Log(Format('The VC++ dependency to install will be: %s', [VC_Redist]));
   if Exec(VC_Redist, '/norestart /install /quiet', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
     Log('VC dependencies successfully installed.')
@@ -142,7 +142,7 @@ begin
     Log(Format('VC++ Redistributable installation failed with exit code: %d', [ErrorCode]));
   end;
 
-  VC_Redist_Relocated := ExpandConstant('{app}\redist\vc_redist.x64.exe');
+  VC_Redist_Relocated := ExpandConstant('{app}\redist\VC_redist.x64.exe');
   Relocated_Dir := ExtractFilePath(VC_Redist_Relocated);
 
   if not DirExists(Relocated_Dir) then
