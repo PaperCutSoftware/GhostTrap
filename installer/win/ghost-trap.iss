@@ -128,6 +128,7 @@ var
   ErrorCode: Integer;
   VC_Redist: String;
   VC_Redist_Relocated: String;
+  Relocated_Dir: String;
 begin
   VC_Redist := ExpandConstant('{app}\vc_redist.x64.exe');
   Log(Format('The VC++ dependency to install will be: %s', [VC_Redist]));
@@ -142,6 +143,11 @@ begin
   end;
 
   VC_Redist_Relocated := ExpandConstant('{app}\redist\vc_redist.x64.exe');
+  Relocated_Dir := ExtractFilePath(VC_Redist_Relocated);
+
+  if not DirExists(Relocated_Dir) then
+    CreateDir(Relocated_Dir);
+
   if FileCopy(VC_Redist, VC_Redist_Relocated, True) then
     DeleteFile(VC_Redist);
 end;
