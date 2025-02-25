@@ -146,7 +146,12 @@ begin
   Relocated_Dir := ExtractFilePath(VC_Redist_Relocated);
 
   if not DirExists(Relocated_Dir) then
-    CreateDir(Relocated_Dir);
+  begin
+    if not CreateDir(Relocated_Dir) then
+    begin
+      Log(Format('Failed to create directory at: %s for redistributable file relocation', [Relocated_Dir]));
+    end;
+  end;
 
   if FileCopy(VC_Redist, VC_Redist_Relocated, True) then
     DeleteFile(VC_Redist);
