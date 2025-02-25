@@ -61,7 +61,10 @@ Source: *; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: bin\gsc-trapped.exe; DestDir: {app}\bin\; DestName: gswin32c-trapped.exe;
 Source: bin\gs.exe; DestDir: {app}\bin\; DestName: gswin32.exe;
 Source: bin\gsc.exe; DestDir: {app}\bin\; DestName: gswin32c.exe;
-Source: vc_redist.x64.exe; DestDir: {app}; DestName: vc_redist.x64.exe; AfterInstall: InstallVCRedist
+{ This is the Microsoft's redistributable binaries for VC++ dependency, we should provide the exact same build as it is
+ is used by GhostScript. As of 25/3/25, the build number is 30153, with a full version number of 14.29.30153. Manually
+ update this file whenever necessary. }
+Source: ..\..\installer\redist\vc_redist.x64.exe; DestDir: {app}\redist; DestName: vc_redist.x64.exe; AfterInstall: InstallVCRedist
 
 
 [Registry]
@@ -118,37 +121,6 @@ begin
   end;
 end;
 
-function IsDependencyInstallationAlreadyRunning(const Filter: string): Boolean;
-var
-  WbemObjectSet: Variant;
-  WbemLocator: Variant;
-  WbemServices: Variant;
-  WQLQuery: String;
-begin
-  Result := False;
-  try
-    WbemLocator := CreateOleObject('WbemScripting.SWbemLocator');
-    WbemServices := WbemLocator.ConnectServer('localhost', 'root\CIMV2');
-
-    WQLQuery :=
-      'SELECT ' +
-      'ProcessId, ' +
-      'Name, ' +
-      'ExecutablePath ' +
-      'FROM Win32_Process ' +
-      'WHERE ' +
-      'Name LIKE "%' + Filter + '%"';
-
-    WbemObjectSet := WbemServices.ExecQuery(WQLQuery);
-    if not VarIsNull(WbemObjectSet) and (WbemObjectSet.Count > 0) then
-    begin
-      Result := True;
-    end;
-  except
-    Result := False;
-  end;
-end;
-
 { The same version of VC++ dependency that is used by GhostScript will be automatically installed by GhostTrap }
 { Requires manual updating if the version used by GhostScript changes in order to mirror the dependency updates }
 procedure InstallVCRedist();
@@ -156,24 +128,15 @@ var
   ErrorCode: Integer;
   VC_Redist: String;
 begin
-  VC_Redist := ExpandConstant('{app}\vc_redist.x64.exe');
+  VC_Redist := ExpandConstant('{app}\redist\vc_redist.x64.exe');
+  Log(Format('The VC++ dependency to install will be: %s', [VC_Redist]));
+  if Exec(VC_Redist, '/norestart /install /quiet', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
+    Log('VC dependencies successfully installed.')
+  else
+    Log(Format('Failed to launch VC++ Redistributable installer. Error Code: %d', [ErrorCode]));
 
-  if not IsDependencyInstallationAlreadyRunning('VC_redist') then
+  if ErrorCode <> 0 then
   begin
-    Log(Format('The VC++ dependency to install will be: %s', [VC_Redist]));
-    if Exec(VC_Redist, '/norestart /install /quiet', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
-      Log('VC dependencies successfully installed.')
-    else
-      Log(Format('Failed to launch VC++ Redistributable installer. Error Code: %d', [ErrorCode]));
-
-    if ErrorCode <> 0 then
-    begin
-      Log(Format('VC++ Redistributable installation failed with exit code: %d', [ErrorCode]));
-    end;
-
-    if DeleteFile(VC_Redist) then
-      Log(Format('Successfully deleted used VC++ installer %s', [VC_Redist]))
-    else
-      Log(Format('Failed to delete used VC++ installer %s!', [VC_Redist]));
+    Log(Format('VC++ Redistributable installation failed with exit code: %d', [ErrorCode]));
   end;
 end;
