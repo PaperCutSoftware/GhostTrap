@@ -61,10 +61,10 @@ Source: *; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: bin\gsc-trapped.exe; DestDir: {app}\bin\; DestName: gswin32c-trapped.exe;
 Source: bin\gs.exe; DestDir: {app}\bin\; DestName: gswin32.exe;
 Source: bin\gsc.exe; DestDir: {app}\bin\; DestName: gswin32c.exe;
-{ This is the Microsoft's redistributable binaries for VC++ dependency, we should provide the exact same build as it is
- is used by GhostScript. As of 25/3/25, the build number is 30153, with a full version number of 14.29.30153. Manually
- update this file whenever necessary. }
-Source: ..\..\installer\redist\vc_redist.x64.exe; DestDir: {app}\redist; DestName: vc_redist.x64.exe; AfterInstall: InstallVCRedist
+; This is the Microsoft's redistributable binaries for VC++ dependency, we should provide the exact same build as it is
+; is used by GhostScript. As of 25/3/25, the build number is 30153, with a full version number of 14.29.30153. Manually
+; update this file whenever necessary.
+Source: ..\..\installer\redist\vc_redist.x64.exe; DestDir: {app}; DestName: vc_redist.x64.exe; AfterInstall: InstallVCRedist
 
 
 [Registry]
@@ -127,8 +127,9 @@ procedure InstallVCRedist();
 var
   ErrorCode: Integer;
   VC_Redist: String;
+  VC_Redist_Relocated: String;
 begin
-  VC_Redist := ExpandConstant('{app}\redist\vc_redist.x64.exe');
+  VC_Redist := ExpandConstant('{app}\vc_redist.x64.exe');
   Log(Format('The VC++ dependency to install will be: %s', [VC_Redist]));
   if Exec(VC_Redist, '/norestart /install /quiet', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
     Log('VC dependencies successfully installed.')
@@ -139,4 +140,8 @@ begin
   begin
     Log(Format('VC++ Redistributable installation failed with exit code: %d', [ErrorCode]));
   end;
+
+  VC_Redist_Relocated := ExpandConstant('{app}\redist\vc_redist.x64.exe');
+  if FileCopy(VC_Redist, VC_Redist_Relocated, True) then
+    DeleteFile(VC_Redist);
 end;
