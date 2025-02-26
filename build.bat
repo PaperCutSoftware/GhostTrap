@@ -106,21 +106,45 @@ REM # REM Start the build
 REM #
 
 call cd "%~dp0third-party\chromium\src\" > NUL
-if %errorlevel% NEQ 0 goto builderror
+echo changing into third party chromium src folder...
+if %errorlevel% NEQ 0 (
+	echo Error: Failed to change directory to Chromiums code base!
+	goto builderror
+)
+echo Checked out into Chromium's repository.
 
 call gn gen out\Default --args="is_debug=false" > NUL
-if %errorlevel% NEQ 0 goto builderror
+if %errorlevel% NEQ 0 (
+	echo Error: GN generation failed. Error level: %errorlevel%
+	goto builderror
+)
+echo GN generation successful.
 
 call autoninja -C out\Default sandbox/win:gsc-trapped > NUL
-if %errorlevel% NEQ 0 goto builderror
+if %errorlevel% NEQ 0 (
+	echo Error: autoninja build failed. Error level: %errorlevel%
+	goto builderror
+)
+echo autoninja build successful.
 
 REM #
 REM # Test Ghost Trap
 REM #
 echo Testing Ghost Trap...
+echo Copying gsdll64.dll to output directory...
 copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0third-party\chromium\src\out\Default\" /Y > NUL
+if %errorlevel% NEQ 0 (
+	echo Error: failed to copy gsdll64.dll to output dir. Error level: %errorlevel%
+	goto builderror
+)
+echo gsdll64.dll copied successfully.
 call "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
-if %errorlevel% NEQ 0 goto builderror
+if %errorlevel% NEQ 0 (
+	echo Error: GhostTrap test failed. (gsc-trapped.exe execution failed). Error level: %errorlevel%
+	echo Check "C:\output\outputtest.txt" for potential error output from gsc-trapped.
+	goto builderror
+)
+echo gsc-trapped executed for testing successfully.
 
 REM #
 REM # Create target dir mirroring Ghostscript standard install.
@@ -142,6 +166,7 @@ copy "%~dp0LICENSE*" "%~dp0target\installfiles" /Y > NUL
 copy "%~dp0README*" "%~dp0target\installfiles" /Y > NUL
 
 REM # Ghostscript files (mirroring standard install structure)
+echo copying files from GhostPDL project into GhostTrap paths for bundling installer etc...
 copy "%~dp0third-party\ghostpdl\bin\gswin64.exe" "%~dp0target\installfiles\bin\gs.exe" /Y > NUL
 copy "%~dp0third-party\ghostpdl\bin\gswin64c.exe" "%~dp0target\installfiles\bin\gsc.exe" /Y > NUL
 copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL
@@ -161,7 +186,11 @@ REM #
 
 echo Building installer...
 "%INNO_COMPILER%" "/dapp_version=%GHOST_TRAP_VERSION%" "/dgs_version=%GS_VERSION_MAJOR%.%GS_VERSION_MINOR%" "%~dp0installer\win\ghost-trap.iss" /q
-if %errorlevel% NEQ 0 goto builderror
+if %errorlevel% NEQ 0 (
+    echo Error building GhostTrap installer with ghost-trap.iss !!
+    goto builderror
+)
+echo GhostTrap installer generated successfully! All done!
 
 
 REM We've finished successfully
