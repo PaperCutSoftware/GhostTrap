@@ -128,7 +128,7 @@ echo gsdll64.dll copied successfully
 
 REM #
 REM # Do not add multi-lined conditional blocks after calling gsc-trapped. Keep the "if" line strictly single-lined.
-REM # CMD gets tripped up for no particular good reason and complains about unexpected symbols.
+REM # CMD gets tripped up for no particular good reason and complains about unexpected symbol "."
 REM #
 call "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
 if %errorlevel% NEQ 0 goto builderror
