@@ -106,25 +106,15 @@ REM # REM Start the build
 REM #
 
 call cd "%~dp0third-party\chromium\src\" > NUL
-echo changing into third party chromium src folder...
-if %errorlevel% NEQ 0 (
-	echo Error: Failed to change directory to Chromiums code base!
-	goto builderror
-)
+if %errorlevel% NEQ 0 goto builderror
 echo Checked out into Chromium's repository.
 
 call gn gen out\Default --args="is_debug=false" > NUL
-if %errorlevel% NEQ 0 (
-	echo Error: GN generation failed. Error level: %errorlevel%
-	goto builderror
-)
+if %errorlevel% NEQ 0 goto builderror
 echo GN generation successful.
 
 call autoninja -C out\Default sandbox/win:gsc-trapped > NUL
-if %errorlevel% NEQ 0 (
-	echo Error: autoninja build failed. Error level: %errorlevel%
-	goto builderror
-)
+if %errorlevel% NEQ 0 goto builderror
 echo autoninja build successful.
 
 REM #
@@ -133,17 +123,15 @@ REM #
 echo Testing Ghost Trap...
 echo Copying gsdll64.dll to output directory...
 copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0third-party\chromium\src\out\Default\" /Y > NUL
-if %errorlevel% NEQ 0 (
-	echo Error: failed to copy gsdll64.dll to output dir. Error level: %errorlevel%
-	goto builderror
-)
-echo gsdll64.dll copied successfully.
+if %errorlevel% NEQ 0 goto builderror
+echo gsdll64.dll copied successfully
+
+REM #
+REM # Do not add multi-lined conditional blocks after calling gsc-trapped. Keep the "if" line strictly single-lined.
+REM # CMD gets tripped up for no particular good reason and complains about unexpected symbols.
+REM #
 call "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
-if %errorlevel% NEQ 0 (
-	echo Error: GhostTrap test failed. (gsc-trapped.exe execution failed). Error level: %errorlevel%
-	echo Check "C:\output\outputtest.txt" for potential error output from gsc-trapped.
-	goto builderror
-)
+if %errorlevel% NEQ 0 goto builderror
 echo gsc-trapped executed for testing successfully.
 
 REM #
