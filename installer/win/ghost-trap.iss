@@ -171,5 +171,6 @@ begin
   end;
 
   if FileCopy(VC_Redist, VC_Redist_Relocated, True) then
+    Log('Moved VC++ redistributable file to the redist folder under installation.');
     DeleteFile(VC_Redist);
 end;
