@@ -121,11 +121,7 @@ REM #
 REM # Test Ghost Trap
 REM #
 echo Testing Ghost Trap...
-echo Copying gsdll64.dll to output directory...
 copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0third-party\chromium\src\out\Default\" /Y > NUL
-if %errorlevel% NEQ 0 goto builderror
-echo gsdll64.dll copied successfully
-
 REM #
 REM # !!! Do not add multi-lined conditional blocks after calling gsc-trapped. Keep the "if" line strictly single-lined.
 REM # CMD gets tripped up for no particular good reason and complains about unexpected symbol "."
@@ -174,11 +170,7 @@ REM #
 
 echo Building installer...
 "%INNO_COMPILER%" "/dapp_version=%GHOST_TRAP_VERSION%" "/dgs_version=%GS_VERSION_MAJOR%.%GS_VERSION_MINOR%" "%~dp0installer\win\ghost-trap.iss" /q
-if %errorlevel% NEQ 0 (
-    echo Error building GhostTrap installer with ghost-trap.iss !!
-    goto builderror
-)
-echo GhostTrap installer generated successfully! All done!
+if %errorlevel% NEQ 0 goto builderror
 
 
 REM We've finished successfully
