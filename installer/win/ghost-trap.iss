@@ -1,4 +1,4 @@
-; Copyright (c) 2012-2024 PaperCut Software Pty Ltd
+; Copyright (c) 2012-2025 PaperCut Software Pty Ltd
 ; Author: Chris Dance <chris.dance@papercut.com>
 ;
 ; License: GNU Affero GPL v3 - See project LICENSE file.
@@ -61,6 +61,10 @@ Source: *; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: bin\gsc-trapped.exe; DestDir: {app}\bin\; DestName: gswin32c-trapped.exe;
 Source: bin\gs.exe; DestDir: {app}\bin\; DestName: gswin32.exe;
 Source: bin\gsc.exe; DestDir: {app}\bin\; DestName: gswin32c.exe;
+; This is the Microsoft's redistributable binaries for VC++ dependency, we should provide the exact same build as it is
+; is used by GhostScript. As of 25/2/25, the build number is 30153, with a full version number of 14.29.30153. Manually
+; update this file whenever necessary.
+Source: ..\..\installer\redist\VC_redist.x64.exe; DestDir: {app}; DestName: VC_redist.x64.exe; AfterInstall: InstallVCRedist
 
 
 [Registry]
@@ -84,25 +88,6 @@ Filename: {app}\bin\{#gs_c_exe}; Parameters: "-q -dBATCH ""-sFONTDIR={code:Fonts
 Type: filesandordirs; Name: {app}\lib\cidfmap;
 
 [Code]
-
-const
-  { Expected minimum version is 14.38.33130.00, for Visual C++ 2015 redistributable packs
-    Update the values here if our requirements change over time }
-  MinMajor = 14;
-  { only applies if actual major version is 14, do not apply if actual major version is higher }
-  MinMinor = 38;
-  { only applies if actual major is 14 and actual minor 38, do not apply if previous versions are higher }
-  MinBld = 33130;
-
-  { Used to store value of whether we have acceptable Visual C++ Runtime components }
-var
-  HasRequiredVCRuntimeVersion : Boolean;
-  VCRuntimeMissingOptionsPage : TInputOptionWizardPage;
-  ReadMoreLink : TLabel;
-
-procedure ExitProcess(ExitCode : Integer);
-  external 'ExitProcess@kernel32.dll stdcall';
-
 function FontsDirWithForwardSlashes(Param: String): String;
 begin
   { The system's Fonts directory in forward slash format }
@@ -136,126 +121,56 @@ begin
   end;
 end;
 
-function IsRequiredVCRuntimeVersionInstalled() : Boolean;
-var
-  cMajor: Cardinal;
-  cMinor: Cardinal;
-  cBld: Cardinal;
-  cRbld: Cardinal;
-  sKey: String;
+{ To get the version string of a given file. Needed for logging the VC redistributable file version. }
+function GetFileVersion(const FileName: String): String;
 begin
-  Result := False;
-  { for more info see https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170#install-the-redistributable-packages }
-  sKey := 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64';
-  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Major', cMajor) then begin
-    if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Minor', cMinor) then begin
-      if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'Bld', cBld) then begin
-        if RegQueryDWordValue(HKEY_LOCAL_MACHINE, sKey, 'RBld', cRbld) then begin
-          if cMajor > MinMajor then begin
-            Result := True;
-            Exit;
-          end;
-
-          if cMajor < MinMajor then begin
-            Exit;
-          end;
-
-          if cMinor > MinMinor then begin
-            Result := True;
-            Exit;
-          end;
-
-          if cMinor < MinMinor then begin
-            Exit;
-          end;
-
-          if (cBld >= MinBld) and (cRbld >= 0) then begin
-            Result := True;
-          end;
-        end;
-      end;
+  Result := '';
+  if FileExists(FileName) then
+  begin
+    if not GetVersionNumbersString(FileName, Result) then
+    begin
+      Result := 'Unspecified Version';
     end;
-  end;
+  end
+  else
+    Result := 'File not found';
 end;
 
-procedure OpenBrowser(Url: string);
+{ The same version of VC++ dependency that is used by GhostScript will be automatically installed by GhostTrap }
+{ Requires manual updating if the version used by GhostScript changes in order to mirror the dependency updates }
+procedure InstallVCRedist();
 var
   ErrorCode: Integer;
+  VC_Redist: String;
+  VC_Redist_Relocated: String;
+  Relocated_Dir: String;
+  VC_Redist_Version: String;
 begin
-  ShellExec('open', Url, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
-end;
+  VC_Redist := ExpandConstant('{app}\VC_redist.x64.exe');
+  VC_Redist_Version := GetFileVersion(VC_Redist);
+  Log(Format('The VC++ dependency version to be installed is: %s', [VC_Redist_Version]));
+  if Exec(VC_Redist, '/norestart /install /quiet', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
+    Log('VC dependencies successfully installed.')
+  else
+    Log(Format('Failed to launch VC++ Redistributable installer. Error Code: %d', [ErrorCode]));
 
-procedure ReadMoreLinkClick(Sender : TObject);
-begin
-  OpenBrowser('https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022');
-end;
-
-procedure CreateLink();
-begin
-  ReadMoreLink := TLabel.Create(WizardForm);
-  ReadMoreLink.Parent := WizardForm;
-  ReadMoreLink.Left := 8;
-  ReadMoreLink.Top := WizardForm.ClientHeight - ReadMoreLink.ClientHeight - 15;
-  ReadMoreLink.Cursor := crHand;
-  ReadMoreLink.Font.Color := clBlue;
-  ReadMoreLink.Caption := 'Read more about Visual C++ dependencies';
-  ReadMoreLink.OnCLick := @ReadMoreLinkClick;
-end;
-
-{ Only display Read More link on added custom page, also set up custom page }
-procedure CurPageChanged(CurPageID: Integer);
-begin
-  ReadMoreLink.Visible := CurPageID = VCRuntimeMissingOptionsPage.ID;
-  if CurPageID = VCRuntimeMissingOptionsPage.ID then begin
-    WizardForm.BackButton.Visible := False;
-    WizardForm.CancelButton.Visible := False;
-    WizardForm.NextButton.Caption := 'Finish';
+  if ErrorCode <> 0 then
+  begin
+    Log(Format('VC++ Redistributable installation failed with exit code: %d', [ErrorCode]));
   end;
-end;
 
-function NextButtonClick(CurPageID: Integer): Boolean;
-var
-  ErrorCode : Integer;
-  InstallNow : Boolean;
-begin
-  { Handle the "Finish" button being clicked on the custom page }
-  if CurPageID = VCRuntimeMissingOptionsPage.ID then begin
-    InstallNow := VCRuntimeMissingOptionsPage.Values[0];
-    if InstallNow then begin
-      if MsgBox('Would you like to install required dependencies now?', mbInformation, MB_YESNO or MB_DEFBUTTON1) = IDYES then begin
-        ShellExec('', 'https://aka.ms/vs/17/release/vc_redist.x64.exe', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
-        ExitProcess(9); { Custom exit code }
-      end;
-    end else begin
-      MsgBox('Please install required VC++ dependencies first and try again.', mbInformation, MB_OK);
-      ExitProcess(9); { Custom exit code }
+  VC_Redist_Relocated := ExpandConstant('{app}\redist\VC_redist.x64.exe');
+  Relocated_Dir := ExtractFilePath(VC_Redist_Relocated);
+
+  if not DirExists(Relocated_Dir) then
+  begin
+    if not CreateDir(Relocated_Dir) then
+    begin
+      Log(Format('Failed to create directory at: %s for redistributable file relocation', [Relocated_Dir]));
     end;
-    Result := False;
-  end else begin
-    Result := True;
   end;
-end;
 
-{ While the custom page is always created, it should be skipped if dependencies are already installed }
-function ShouldSkipPage(PageID: Integer): Boolean;
-begin
-  { For potentially different custom page in the future, compare page ID one at a time }
-  Result := (PageID = VCRuntimeMissingOptionsPage.ID) and HasRequiredVCRuntimeVersion;
-end;
-
-procedure InitializeWizard();
-begin
-  { If the OS is missing required dependencies, the installation process will not go the full length and will be exited early }
-  HasRequiredVCRuntimeVersion := IsRequiredVCRuntimeVersionInstalled();
-  { Create the custom page to handle the scenario where dependencies don't exist }
-  VCRuntimeMissingOptionsPage := CreateInputOptionPage(wpLicense,
-    'Visual C++ Runtime Required',
-    'You are seeing this page because required dependencies for GhostTrap are missing on your operating system.',
-    'GhostTrap of version 1.4.10.02 and above requires reasonably up-to-date Visual C++ Runtimes to function properly. You must install required Microsoft Redistributables before installing GhostTrap.' + #13#10 + #13#10 + 'Either option will terminate the current installation process.',
-    True, False);
-
-  VCRuntimeMissingOptionsPage.Add('&Install the dependencies from Microsoft now. (Recommended)');
-  VCRuntimeMissingOptionsPage.Add('I will find the required dependencies myself later.');
-  VCRuntimeMissingOptionsPage.Values[0] := True;
-  CreateLink();
+  if FileCopy(VC_Redist, VC_Redist_Relocated, True) then
+    Log('Moved VC++ redistributable file to the redist folder under installation.');
+    DeleteFile(VC_Redist);
 end;
