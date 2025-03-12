@@ -1,5 +1,5 @@
 @echo off
-set GHOST_TRAP_VERSION=1.5
+set GHOST_TRAP_VERSION=1.6
 set INNO_COMPILER=%programfiles(x86)%\Inno Setup 6\ISCC.exe
 SETLOCAL ENABLEDELAYEDEXPANSION
 set starttime=%time%
