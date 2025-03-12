@@ -16,7 +16,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ## Download
 
-*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.5.10.03.exe)  (version 1.5.10.03)
+*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.5.10.03.exe)  (version 1.5.10.03, To be updated)
 
 
 ## Motivation
@@ -65,7 +65,7 @@ To convert a multi-page PDF file into a JPEG images *WITH* sandboxing:
                  "C:\Program Files (x86)\GhostTrap\examples\annots.pdf"
 
 `gsc-trapped.exe` is the sandboxed version of `gsc.exe`.  It should behave the same
-as the standard Ghostscript console command as [documented](https://ghostscript.readthedocs.io/en/gs10.03.1/Use.html),
+as the standard Ghostscript console command as [documented](https://ghostscript.readthedocs.io/en/gs10.04.0/Use.html),
 with the following known exceptions:
 
  *  The input and output files must be on a local disk (no network shares).
@@ -93,6 +93,10 @@ escape vectors.
 
 
 ## Release History
+
+### [1.6.10.04.0] - 2025-03-12
+ * Updated to GhostScript 10.04.0 (2024-09-18).
+ * Installer now silently installs the same Visual Studio C++ runtime (Build 14.29.30153, x64) as GhostScript installer.
 
 ### [1.5.10.03.1] - 2024-08-09
  * Installer compatible with ARM64 Windows.
@@ -190,7 +194,7 @@ The following future refinements are planned:
 
 *Ghost Trap* is open source software licensed under the Affero GPL:
 
-    Copyright (c) 2012-2024 PaperCut Software Pty Ltd http://www.papercut.com/
+    Copyright (c) 2012-2025 PaperCut Software Pty Ltd http://www.papercut.com/
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
@@ -205,7 +209,7 @@ The following future refinements are planned:
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+[1.6.10.04.0]: TBA
 [1.5.10.03.1]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.4.10.03.1...v1.5.10.03.1
 [1.4.10.03.1]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.4.10.02.1...v1.4.10.03.1
 [1.4.10.02.1]: https://github.com/PaperCutSoftware/GhostTrap/compare/v1.4.10.00...v1.4.10.02.1

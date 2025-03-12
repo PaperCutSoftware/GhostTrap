@@ -4,7 +4,7 @@ set INNO_COMPILER=%programfiles(x86)%\Inno Setup 6\ISCC.exe
 SETLOCAL ENABLEDELAYEDEXPANSION
 set starttime=%time%
 set startdir=%cd%
-set gsversion=10.03.1
+set gsversion=10.04.0
 
 echo  .-.      ___ _               _  _____                 
 echo (o o)    / _ \ ^|__   ___  ___^| ^|/__   \_ __ __ _ _ __  
