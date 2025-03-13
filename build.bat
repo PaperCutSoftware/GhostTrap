@@ -1,10 +1,10 @@
 @echo off
-set GHOST_TRAP_VERSION=1.5
+set GHOST_TRAP_VERSION=1.6
 set INNO_COMPILER=%programfiles(x86)%\Inno Setup 6\ISCC.exe
 SETLOCAL ENABLEDELAYEDEXPANSION
 set starttime=%time%
 set startdir=%cd%
-set gsversion=10.03.1
+set gsversion=10.04.0
 
 echo  .-.      ___ _               _  _____                 
 echo (o o)    / _ \ ^|__   ___  ___^| ^|/__   \_ __ __ _ _ __  
@@ -107,20 +107,28 @@ REM #
 
 call cd "%~dp0third-party\chromium\src\" > NUL
 if %errorlevel% NEQ 0 goto builderror
+echo Checked out into Chromium's repository.
 
 call gn gen out\Default --args="is_debug=false" > NUL
 if %errorlevel% NEQ 0 goto builderror
+echo GN generation successful.
 
 call autoninja -C out\Default sandbox/win:gsc-trapped > NUL
 if %errorlevel% NEQ 0 goto builderror
+echo autoninja build successful.
 
 REM #
 REM # Test Ghost Trap
 REM #
 echo Testing Ghost Trap...
 copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0third-party\chromium\src\out\Default\" /Y > NUL
+REM #
+REM # !!! Do not add multi-lined conditional blocks after calling gsc-trapped. Keep the "if" line strictly single-lined.
+REM # CMD gets tripped up for no particular good reason and complains about unexpected symbol "."
+REM #
 call "%~dp0third-party\chromium\src\out\Default\gsc-trapped.exe" --test-sandbox -sOutputFile="C:\output\outputtest.txt" "C:\input\inputtest.txt"
 if %errorlevel% NEQ 0 goto builderror
+echo gsc-trapped executed for testing successfully.
 
 REM #
 REM # Create target dir mirroring Ghostscript standard install.
@@ -142,6 +150,7 @@ copy "%~dp0LICENSE*" "%~dp0target\installfiles" /Y > NUL
 copy "%~dp0README*" "%~dp0target\installfiles" /Y > NUL
 
 REM # Ghostscript files (mirroring standard install structure)
+echo copying files from GhostPDL project into GhostTrap paths for bundling installer etc...
 copy "%~dp0third-party\ghostpdl\bin\gswin64.exe" "%~dp0target\installfiles\bin\gs.exe" /Y > NUL
 copy "%~dp0third-party\ghostpdl\bin\gswin64c.exe" "%~dp0target\installfiles\bin\gsc.exe" /Y > NUL
 copy "%~dp0third-party\ghostpdl\bin\gsdll64.dll" "%~dp0target\installfiles\bin\" /Y > NUL

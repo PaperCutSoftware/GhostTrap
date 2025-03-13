@@ -17,7 +17,7 @@
 #define gs_name "GPL Ghostscript"
 
 #ifndef gs_version
-  #define gs_version "10.03.1"
+  #define gs_version "10.04.0"
 #endif
 
 #define gs_c_exe "gsc.exe"
