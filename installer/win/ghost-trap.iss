@@ -86,6 +86,7 @@ Filename: {app}\bin\{#gs_c_exe}; Parameters: "-q -dBATCH ""-sFONTDIR={code:Fonts
 
 [UninstallDelete]
 Type: filesandordirs; Name: {app}\lib\cidfmap;
+Type: filesandordirs; Name: {app}\redist;
 
 [Code]
 function FontsDirWithForwardSlashes(Param: String): String;
