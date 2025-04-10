@@ -16,7 +16,7 @@ securely holds Ghostscripts in a laser containment field :-)
 
 ## Download
 
-*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.5.10.03.exe)  (version 1.5.10.03, To be updated)
+*Windows:* [ghost-trap-installer.exe](https://cdn1.papercut.com/files/open-source/ghost-trap/ghost-trap-installer-1.6.10.04.exe)  (version 1.6.10.04)
 
 
 ## Motivation
@@ -94,9 +94,9 @@ escape vectors.
 
 ## Release History
 
-### [1.6.10.04.0] - 2025-03-12
+### [1.6.10.04.0] - 2025-04-10
  * Updated to GhostScript 10.04.0 (2024-09-18).
- * Installer now silently installs the same Visual Studio C++ runtime (Build 14.29.30153, x64) as GhostScript installer.
+ * Installer now silently installs the same Visual Studio C++ runtime (Build 14.29.30153, x64) as GhostScript installers would, no longer breaking `/VERYSILENT` installation flags.
 
 ### [1.5.10.03.1] - 2024-08-09
  * Installer compatible with ARM64 Windows.
