@@ -1,4 +1,4 @@
-; Copyright (c) 2012-2025 PaperCut Software Pty Ltd
+; Copyright (c) 2012-2026 PaperCut Software Pty Ltd
 ; Author: Chris Dance <chris.dance@papercut.com>
 ;
 ; License: GNU Affero GPL v3 - See project LICENSE file.
@@ -17,7 +17,7 @@
 #define gs_name "GPL Ghostscript"
 
 #ifndef gs_version
-  #define gs_version "10.04.0"
+  #define gs_version "10.07.0"
 #endif
 
 #define gs_c_exe "gsc.exe"
