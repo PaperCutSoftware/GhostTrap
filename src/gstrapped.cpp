@@ -245,22 +245,197 @@ static void AllowAccessToFile(sandbox::TargetPolicy &policy, wchar_t *file, BOOL
 
 
 /*
+ * Resolve `path` to an absolute path and confirm it names an existing,
+ * non-directory file, writing the result into `out_full_path` (a buffer of
+ * `out_len` wchar_ts).  Returns FALSE - leaving `out_full_path` unspecified -
+ * if the path cannot be resolved, doesn't fit the buffer, or doesn't exist.
+ *
+ * This existence check matters because Ghostscript resolves a bare input
+ * file name (and an @-argument file) on its own library search path
+ * (imainarg.c's argproc() runs ".runfile", which reaches findlibfile() via
+ * runlibfile - not a literal open - unless -B is in force), not solely as a
+ * path relative to the current working directory.  A name that does not
+ * exist relative to CWD must be passed through unchanged: rewriting it to a
+ * CWD-absolute path here would point Ghostscript at a location that does not
+ * exist, defeating that lookup.  A name present both in CWD and on the search
+ * path resolves to the CWD copy, as it already did for the last argument.
+ *
+ * `out_resolve_failed` is set to FALSE on entry, and to TRUE when FALSE is
+ * returned for a genuine error worth reporting: GetFullPathName() itself
+ * failed, the path doesn't fit the buffer, or GetFileAttributes() failed for
+ * a reason other than the path simply not existing (e.g. access denied, a
+ * device not ready, a bad network path, a sharing violation).  It stays
+ * FALSE when FALSE is returned because the resolved path doesn't exist as a
+ * file (ERROR_FILE_NOT_FOUND/ERROR_PATH_NOT_FOUND/ERROR_INVALID_NAME) - the
+ * expected, benign case of a name Ghostscript will resolve on its own
+ * library search path instead - or because it names a directory, which
+ * Ghostscript cannot open as an input file either way.
+ */
+static BOOL ResolveExistingFullPath(const wchar_t *path, wchar_t *out_full_path, DWORD out_len, BOOL *out_resolve_failed) {
+    *out_resolve_failed = FALSE;
+
+    DWORD len = GetFullPathName(path, out_len, out_full_path, NULL);
+    if (len == 0 || len >= out_len) {
+        *out_resolve_failed = TRUE;
+        return FALSE;
+    }
+    DWORD attrs = GetFileAttributes(out_full_path);
+    if (attrs == INVALID_FILE_ATTRIBUTES) {
+        // Only "genuinely not here" is benign; anything else (access denied,
+        // a sharing violation, a bad network path, ...) means the file may
+        // well exist and the caller should be told the query failed.
+        DWORD err = GetLastError();
+        if (err != ERROR_FILE_NOT_FOUND && err != ERROR_PATH_NOT_FOUND && err != ERROR_INVALID_NAME) {
+            *out_resolve_failed = TRUE;
+        }
+        return FALSE;
+    }
+    if ((attrs & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/*
+ * Classify each command-line argument as an input file to Ghostscript or not,
+ * mirroring the argument grammar in Ghostscript's psi/imainarg.c, so the sandbox
+ * whitelists the files Ghostscript opens rather than guessing at one positionally.
+ *
+ * For every argv[i] this writes into prefix_len[i] either -1 (not an input file)
+ * or the number of leading characters that are switch punctuation rather than
+ * part of the path (0 for a bare file, or a file taken after "--"/"-+"/"-@"; 1
+ * for "@file", including the "@file" operand of a "-@"; 2 for
+ * "-ffile"/"-Ffile").  The file path is then argv[i] + prefix_len[i].
+ *
+ * Only -c, -I, -o, --, -+ and -@ have handlers that call arg_next(); every other
+ * switch is self-contained, so an unknown switch can never cause the next token
+ * to be whitelisted.  imainarg.c's swproc() gates "--" on an exact spelling but
+ * not "-+"/"-@": those take the next token as the file even with attached text.
+ *
+ * After a --/-+/-@ file the remaining tokens are drained into userdict/ARGUMENTS
+ * as strings, so classification stops there.  Under -- and -+ they are never
+ * opened; -@ is the same grammar with arg_next()'s @-expansion left on, because
+ * swproc() enters case '@' directly and only the fall-through from case '+'
+ * (taken by -- and -+) clears pal->expand_ats.  So under -@ alone an @-prefixed
+ * token is an argument file Ghostscript opens: as the file operand, whitelisted
+ * here like any other @file, and in the ARGUMENTS drain, which is not (below).
+ * Stopping there can only under-grant, never widen.
+ *
+ * Paths Ghostscript can read that are not modelled: files named inside an
+ * @-argument file (the @-file itself is whitelisted), an @-token drained into
+ * ARGUMENTS by a -@ run (above), the @-file operand of a bare -I or -o (those
+ * handlers call arg_next() without clearing pal->expand_ats), and arguments
+ * supplied through GS_OPTIONS.  In the ordinary case a file Ghostscript opens
+ * simply goes unwhitelisted and the sandbox denies the read - that fails
+ * closed.  What does not is a desync: an @-file is spliced into the same
+ * arg_next() stream that then reads argv, so a token-consuming switch at its
+ * end takes its operand from the next argv token(s); this classifier, blind to
+ * the @-file's contents, can misclassify such a token as an input file, after
+ * which it is granted kAllowAny and rewritten to an absolute path - a wider
+ * grant and an altered argument, not a denial.  GS_OPTIONS cannot desync this
+ * way: it is drained before argv, and the token after it is this file's own
+ * injected -dSAFER.  Nor are these the only paths left unwhitelisted: see the
+ * FIXME above ExpandPathsInArgs().
+ */
+static void ClassifyInputArgs(int argc, wchar_t *argv[], int prefix_len[]) {
+    bool skip_next = false;    /* previous -I/-o consumed the next token as a value */
+    wchar_t sep = 0;           /* the --/-+/-@ just seen (its second char): next token is its file */
+    bool in_code = false;      /* inside a -c run: following tokens are code, not files */
+    bool done = false;         /* past a --/-+/-@ file: the rest are ARGUMENTS strings */
+
+    for (int i = 0; i < argc; ++i) {
+        prefix_len[i] = -1;
+
+        if (i == 0 || done) {      /* argv[0] is the executable, never a file */
+            continue;
+        }
+
+        wchar_t *a = argv[i];
+
+        if (skip_next) {           /* value consumed by a previous -I/-o */
+            skip_next = false;
+            continue;
+        }
+        if (sep != 0) {            /* file after --/-+/-@, even if it starts with '-' */
+            /* Only -@ leaves @-expansion on, so only there is a leading '@'
+             * a prefix rather than part of the name (see above). */
+            prefix_len[i] = (sep == L'@' && a[0] == L'@') ? 1 : 0;
+            done = true;           /* Ghostscript runs this file and then quits */
+            continue;
+        }
+        if (in_code) {
+            /* -c operands are code until the next switch (not a negative number)
+             * or an @-file, matching the loop in imainarg.c's 'c' case.  The test
+             * there is isdigit() on a single byte, so only ASCII 0-9 count. */
+            if (a[0] == L'@' ||
+                (a[0] == L'-' && !(a[1] >= L'0' && a[1] <= L'9'))) {
+                in_code = false;   /* terminator: fall through and classify it */
+            } else {
+                continue;          /* PostScript code operand, not a file */
+            }
+        }
+
+        if (a[0] == L'@') {        /* @file: Ghostscript reads this argument file */
+            prefix_len[i] = 1;
+            continue;
+        }
+        if (a[0] != L'-') {        /* a bare token is an input file */
+            prefix_len[i] = 0;
+            continue;
+        }
+
+        /* a[0] == '-': a switch. */
+        if (a[1] == L'-' && a[2] == 0) {
+            sep = a[1];                                /* "--": next token is a file */
+        } else if (a[1] == L'+' || a[1] == L'@') {
+            sep = a[1];                                /* "-+"/"-@": next token is a file */
+        } else if (a[1] == L'c') {
+            in_code = true;                            /* "-c": code follows (any attached
+                                                        * text is discarded by imainarg.c) */
+        } else if ((a[1] == L'f' || a[1] == L'F') && a[2] != 0) {
+            prefix_len[i] = 2;                         /* "-ffile"/"-Ffile" */
+        } else if ((a[1] == L'I' || a[1] == L'o') && a[2] == 0) {
+            skip_next = true;                          /* "-I"/"-o" take the next token */
+        }
+        /* every other switch is self-contained and consumes no following token */
+    }
+}
+
+
+/*
  * Look through the standard Ghostscript cmd-line arguments looking for paths.
- * Expand relative and normalize all paths.  This is required as at the time of 
+ * Expand relative and normalize all paths.  This is required as at the time of
  * writing, any open file request in the Google Chrome sandbox must be an absolute
  * path.  This function will pass back a new **argv instance any any expanded
  * paths will be malloced buffers.
- * 
- * TODO: The input file argument is assumed to be the last argument. This is not
- * necessarily so via the -f option.
+ *
+ * Every input file that exists relative to the current working directory is
+ * made absolute; input files are identified via ClassifyInputArgs(), which
+ * handles multiple files, -f/-F, "--" and @-argument forms, and leaves
+ * non-file trailing tokens untouched.  A classified input token that does not
+ * exist relative to CWD is also left untouched; see ResolveExistingFullPath()
+ * for why.
+ *
+ * Runs in BOTH processes: in the broker, where the result decides the
+ * whitelist, and again in the target, where it only tidies the argument list
+ * Ghostscript is handed.  Only the broker can report a failure usefully, hence
+ * report_failures.
  *
  * FIXME: What about other paths such as defining a custom libary files or fonts?
  */
-static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[]) {
+static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[], BOOL report_failures) {
+    int *input_prefix = (int *) calloc(argc, sizeof(int));
+    if (input_prefix == NULL) {
+        fprintf(stderr, "Ghost Trap: Failed to initialise due to malloc failure\n");
+        return argv;
+    }
+    ClassifyInputArgs(argc, argv, input_prefix);
     wchar_t **full_path_argv = (wchar_t **) calloc(argc, sizeof(full_path_argv[0]));
 
     if (full_path_argv == NULL) {
         fprintf(stderr, "Ghost Trap: Failed to initialise due to malloc failure\n");
+        free(input_prefix);
         return argv;
     }
 
@@ -270,36 +445,55 @@ static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[]) {
         wchar_t *current_argv = argv[i];
 
         full_path_argv[i] = current_argv;
-        // Convert relative paths to absolute if found.
+        // Convert relative paths to absolute if found.  Skipped for a classified
+        // input: PARAM_OUTPUT_FILE is unanchored, so the input branch owns that slot.
         wchar_t *p;
-        if ((p = wcsstr(argv[i], PARAM_OUTPUT_FILE)) != NULL) {
+        if (input_prefix[i] < 0 && (p = wcsstr(argv[i], PARAM_OUTPUT_FILE)) != NULL) {
             p += wcslen(PARAM_OUTPUT_FILE);
 
             wchar_t full_path[MAX_PATH];
 
-            if (GetFullPathName(p, MAX_PATH, full_path, NULL) > 0) {
+            // A bare "> 0" also accepts the buffer-too-small case, where the
+            // documented return is the required size rather than the length
+            // written.
+            DWORD full_path_len = GetFullPathName(p, MAX_PATH, full_path, NULL);
+
+            if (full_path_len > 0 && full_path_len < MAX_PATH) {
 
                 full_path_argv[i] = (wchar_t *) malloc(sizeof(new_arg));
                 _snwprintf(full_path_argv[i], sizeof(new_arg), L"-sOutputFile=%s", full_path);
             }
         }
 
-        // Make the input file absolute if required. We assume this is the last argument.
-        // FIXME: Assumption not quite correct with -f option.
-        if ((i + 1) == argc) {
-            wchar_t *last_arg = argv[argc - 1];
-            if (*last_arg != L'-') {
+        // Make each input file absolute: every token ClassifyInputArgs() marked
+        // as an input file is expanded, and any switch prefix ("-f", "-F", "@") is
+        // preserved ahead of the path.  Non-file tokens are left untouched.
+        if (input_prefix[i] >= 0) {
+            int prefix = input_prefix[i];
+            wchar_t input_full_path[MAX_PATH];
+            BOOL resolve_failed = FALSE;
 
-                if (GetFullPathName(last_arg, MAX_PATH, new_arg, NULL) > 0) {
-
-                    full_path_argv[i] = (wchar_t *) malloc(sizeof(new_arg));
-                    _snwprintf(full_path_argv[i], sizeof(new_arg), L"%s", new_arg);
-
+            if (ResolveExistingFullPath(argv[i] + prefix, input_full_path, MAX_PATH, &resolve_failed)) {
+                size_t nelem = (size_t) prefix + MAX_PATH;
+                wchar_t *rewritten = (wchar_t *) malloc(nelem * sizeof(wchar_t));
+                if (rewritten != NULL) {
+                    _snwprintf(rewritten, nelem, L"%.*s%s", prefix, argv[i], input_full_path);
+                    full_path_argv[i] = rewritten;
+                } else {
+                    fprintf(stderr, "Ghost Trap: Failed to initialise due to malloc failure\n");
                 }
+            } else if (resolve_failed && report_failures) {
+                // Broker only.  Inside the sandbox this same code sees
+                // ERROR_ACCESS_DENIED for every path the policy did not
+                // whitelist - the ordinary answer there, not a fault - so the
+                // target would warn about inputs that resolve perfectly well
+                // on Ghostscript's library search path.
+                fprintf(stderr, "Ghost Trap: Unable to resolve the input file path for argument %d; it will not be readable.\n", i);
             }
         }
     }
 
+    free(input_prefix);
     return full_path_argv;
 }
 
@@ -312,7 +506,7 @@ static wchar_t ** ExpandPathsInArgs(int argc, wchar_t *argv[]) {
  */
 static void ApplyPolicy(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]) {
     // Fix up and expand paths in the args
-    wchar_t **nargv = ExpandPathsInArgs(argc, argv);
+    wchar_t **nargv = ExpandPathsInArgs(argc, argv, TRUE);
 
     /*
      * These items need to be white listed:
@@ -502,10 +696,29 @@ static void ApplyPolicy(sandbox::TargetPolicy &policy, int argc, wchar_t* argv[]
         fprintf(stderr, "Ghost Trap: An OutputFile with an absolute path is required.\n");
     }
 
-    // Add READ/WRITE access to the provided input file (assume this will be the last arg).
-    wchar_t *last_arg = nargv[argc - 1];
-    if (*last_arg != L'-') {
-       AllowAccessToFile(policy, last_arg, FALSE);
+    // Add access to every input file.  Input files are identified with the same
+    // classifier used to expand them - there may be several, and they may be
+    // given via -f/-F, "--" or @ forms.  The access granted is whatever
+    // AllowAccessToFile() grants; nargv already holds the absolute path, so step
+    // past any preserved switch prefix.
+    //
+    // ClassifyInputArgs() is lexical only, so re-running it here is safe.
+    // Whether a token was rewritten is read off nargv, not re-derived with a
+    // second filesystem query.  Both clauses below are needed:
+    // input_prefix[i] >= 0 excludes tokens the OutputFile branch rewrote.
+    {
+        int *input_prefix = (int *) calloc(argc, sizeof(int));
+        if (input_prefix != NULL) {
+            ClassifyInputArgs(argc, argv, input_prefix);
+            for (i = 0; i < argc; ++i) {
+                if (input_prefix[i] >= 0 && nargv[i] != argv[i]) {
+                    AllowAccessToFile(policy, nargv[i] + input_prefix[i], FALSE);
+                }
+            }
+            free(input_prefix);
+        } else {
+            fprintf(stderr, "Ghost Trap: Failed to initialise due to malloc failure\n");
+        }
     }
 }
 
@@ -629,7 +842,7 @@ static int SandboxedMain(int argc, wchar_t* argv[]) {
         }
     }
 
-    wchar_t **full_path_argv = ExpandPathsInArgs(argc, argv);
+    wchar_t **full_path_argv = ExpandPathsInArgs(argc, argv, FALSE);
   
     /* Duplicate wide args as utf8 */
     char **nargv;
